@@ -20,6 +20,11 @@ data class DataType(
     var x12: Int? = 0
 }
 
+@Funnelable
+data class Rec(
+        val a: Int,
+        val b: Rec?)
+
 fun main(args: Array<String>) {
 
     // Make data item
@@ -28,9 +33,11 @@ fun main(args: Array<String>) {
 
     // Write using direct module reference
     TestsModule.std.write(PrintSeqSink, original)
+    println()
 
     // Write using services
     ServiceModule.std.write(PrintSeqSink, original)
+    println()
 
     // Clone using forward/backward path
     val fwdBwd = ListSink().let {
@@ -39,5 +46,23 @@ fun main(args: Array<String>) {
     }
 
     println(fwdBwd)
+    println()
+
+    // Make a recursive data item
+    val rec = Rec(1, Rec(2, Rec(3, null)))
+
+    // Write to console
+    TestsModule.std.write(PrintLabelSink, rec)
+    println()
+
+    // Clone using forward/backward path
+    val recFwdBwd = ListSink().let {
+        TestsModule.std.write(it, rec)
+        TestsModule.std.read<Rec>(ListSource(it.reset()))
+    }
+
+    println(recFwdBwd)
+    println()
+
 
 }

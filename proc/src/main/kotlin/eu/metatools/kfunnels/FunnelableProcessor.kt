@@ -375,11 +375,11 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         /**
          * Computes the kfunnels type for the protobuf type
          */
-        fun computeType(type: ProtoBuf.Type) =
+        fun computeType(type: ProtoBuf.Type, resetNullity: Boolean = false) =
                 if (isPrimitive(type))
                     computePrimitiveType(type)
                 else
-                    computeComplexType(type)
+                    computeComplexType(type, resetNullity)
 
         /**
          * Computes the type of a primitive type ([isPrimitive]).
@@ -402,10 +402,10 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         /**
          * Computes the type of a non-primitive type.
          */
-        private fun computeComplexType(type: ProtoBuf.Type): String {
+        private fun computeComplexType(type: ProtoBuf.Type, resetNullity: Boolean): String {
             // Compute components
             val root = typeEnvironment.nameResolver.getString(type.className).replace('/', '.')
-            val nullable = type.nullable
+            val nullable = type.nullable && !resetNullity
             val args = type.argumentList.map { computeType(it) }
 
             // Return composed string
@@ -431,11 +431,11 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         /**
          * Computes the declaration for the protobuf type
          */
-        fun computeDeclaration(type: ProtoBuf.Type) =
+        fun computeDeclaration(type: ProtoBuf.Type, resetNullity: Boolean = false) =
                 if (isPrimitive(type))
                     computePrimitiveDeclaration(type)
                 else
-                    computeComplexDeclaration(type)
+                    computeComplexDeclaration(type, resetNullity)
 
         /**
          * Computes the declaration of a primitive type ([isPrimitive]).
@@ -458,10 +458,10 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         /**
          * Computes the declaration of a non-primitive type.
          */
-        private fun computeComplexDeclaration(type: ProtoBuf.Type): String {
+        private fun computeComplexDeclaration(type: ProtoBuf.Type, resetNullity: Boolean): String {
             // Compute components
             val root = typeEnvironment.nameResolver.getString(type.className).replace('/', '.')
-            val nullable = if (type.nullable) "?" else ""
+            val nullable = if (type.nullable && !resetNullity) "?" else ""
             val args = type.argumentList.map { computeDeclaration(it) }
 
             // Return composed string
@@ -524,8 +524,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 for (t in environment.requiredTypes.filter { !mapper.isPrimitive(it) }) {
                     // Compute the declaration and the type
                     val label = mapper.funneler(t)
-                    val decl = mapper.computeDeclaration(t)
-                    val type = mapper.computeType(t)
+                    val decl = mapper.computeDeclaration(t, true)
+                    val type = mapper.computeType(t, true)
                     // Write a value with the funneler for that declaration
                     writeTrimmed("""
         |
