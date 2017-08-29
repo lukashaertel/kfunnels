@@ -56,11 +56,12 @@ fun main(args: Array<String>) {
     }
 
     println(fwdBwd)
-}```
+}
+```
 
 # Output
 
-```
+```text
 Boolean true
 Byte 23
 Short 43
@@ -102,5 +103,4 @@ Null false
 Int 5555
 
 DataType(x1=true, x2=23, x3=43, x4=124, x5=512313, x6=null, x7=2.0, x8=a, x9=kotlin.Unit, x10=Hallo, x11=[1, 2, 3])
-
 ```
