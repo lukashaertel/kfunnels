@@ -34,7 +34,7 @@ fun main(args: Array<String>) {
 
     val c = Container(100, "Hello")
 
-    TestsModule.std.write(PrintLabelSink, c)
+    TestsModule.std.write(PrintLabelSink, c) { it.keyNullable() }
 
 /*
     // Make data item

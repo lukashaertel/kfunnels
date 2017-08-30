@@ -178,12 +178,20 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
     /**
      * Convenience method for the first type argument of two.
      */
-    val key get() = args[0].apply { check(args.size == 2) }
+    val key: Type
+        get() {
+            check(args.size == 2)
+            return args[0]
+        }
 
     /**
      * Convenience method for the second type argument of two.
      */
-    val value get() = args[1].apply { check(args.size == 2) }
+    val value: Type
+        get() {
+            check(args.size == 2)
+            return args[1]
+        }
 
     /**
      * Maps to a new type where the [arg] is nullable.

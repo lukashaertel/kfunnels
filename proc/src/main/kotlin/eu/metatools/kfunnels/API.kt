@@ -100,6 +100,44 @@ inline fun <reified T> Module.write(sink: LabelSink, item: T) {
     return resolve<T>(t).write(this, t, sink, item)
 }
 
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
+ * limitations. Applies a configurator function to the inferred type.
+ */
+inline fun <reified T> Module.read(source: SeqSource, configureType: (Type) -> Type): T {
+    val t = configureType(Type.from<T>())
+    return resolve<T>(t).read(this, t, source)
+}
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
+ * limitations. Applies a configurator function to the inferred type.
+ */
+inline fun <reified T> Module.read(source: LabelSource, configureType: (Type) -> Type): T {
+    val t = configureType(Type.from<T>())
+    return resolve<T>(t).read(this, t, source)
+}
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
+ * limitations. Applies a configurator function to the inferred type.
+ */
+inline fun <reified T> Module.write(sink: SeqSink, item: T, configureType: (Type) -> Type) {
+    val t = configureType(Type.from<T>())
+    return resolve<T>(t).write(this, t, sink, item)
+}
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
+ * limitations. Applies a configurator function to the inferred type.
+ */
+inline fun <reified T> Module.write(sink: LabelSink, item: T, configureType: (Type) -> Type) {
+    val t = configureType(Type.from<T>())
+    return resolve<T>(t).write(this, t, sink, item)
+}
+
+
 /**
  * Funnels and unfunnels elements of type [T] into and out of sequence and label sinks.
  */
