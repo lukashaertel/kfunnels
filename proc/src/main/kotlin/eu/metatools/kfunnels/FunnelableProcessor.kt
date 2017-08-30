@@ -160,8 +160,9 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |}
         |
         |/**
-        | * Holds and resolves the funnelers ${funnelers.joinToString(", ") { "[${it.joined}]" }}. Use [std] to
-        | * support primitive types and collections.
+        | * Holds and resolves the funnelers:
+        |${funnelers.joinToString("") { " * * [${it.joined}]\r\n" }}
+        | * Use [std] to support primitive types and collections.
         | */
         |object ${moduleName.className} : GeneratedModule {
         |
@@ -198,7 +199,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
     /**
      * Prepares the metadata, primary constructor information, values, variables.
      */
-    private class TypeEnvironment(val element: TypeElement) {
+    private inner class TypeEnvironment(val element: TypeElement) {
         /**
          * Metadata as defined by the Kotlin metadata annotation.
          */
@@ -237,6 +238,27 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
          * Class of the class data.
          */
         val data get() = classData.component2()
+
+        /**
+         * True if the type is a class
+         */
+        val isClass by lazy {
+            Flags.CLASS_KIND[data.flags] == ProtoBuf.Class.Kind.CLASS
+        }
+
+        /**
+         * True if this class is not abstract
+         */
+        val isInstanitable by lazy {
+            Flags.MODALITY[data.flags] != ProtoBuf.Modality.ABSTRACT
+        }
+
+        /**
+         * The type arguments of the described class.
+         */
+        val typeArguments by lazy {
+            data.typeParameterList
+        }
 
         /**
          * The only non-secondary constructor.
@@ -336,7 +358,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
     /**
      * Wraps the type string and declaration string computation.
      */
-    private class FunnelerMapper(val typeEnvironment: TypeEnvironment) {
+    private inner class FunnelerMapper(val typeEnvironment: TypeEnvironment) {
 
         /**
          * Computes the type of a type argument, handling projection.
@@ -403,6 +425,17 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
          * Computes the type of a non-primitive type.
          */
         private fun computeComplexType(type: ProtoBuf.Type, resetNullity: Boolean): String {
+            // If type parameter, get from type parameter list
+            if (type.hasTypeParameter()) {
+                // Compute nulling operator and index
+                // TODO Is reset here necesseary or just symmetric
+                val nullable = if (type.nullable && !resetNullity) "-" else "+"
+                val index = type.typeParameter
+
+                // Compose
+                return "${nullable}type.args[$index]"
+            }
+
             // Compute components
             val root = typeEnvironment.nameResolver.getString(type.className).replace('/', '.')
             val nullable = type.nullable && !resetNullity
@@ -459,6 +492,17 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
          * Computes the declaration of a non-primitive type.
          */
         private fun computeComplexDeclaration(type: ProtoBuf.Type, resetNullity: Boolean): String {
+            // If type parameter, get from type parameter list
+            if (type.hasTypeParameter()) {
+                // Compute type argument name and nullable suffix
+                val name = typeEnvironment.nameResolver.getString(
+                        typeEnvironment.typeArguments[type.typeParameter].name)
+                val nullable = if (type.nullable) "?" else ""
+
+                // Compose
+                return "$name$nullable"
+            }
+
             // Compute components
             val root = typeEnvironment.nameResolver.getString(type.className).replace('/', '.')
             val nullable = if (type.nullable && !resetNullity) "?" else ""
@@ -469,6 +513,21 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 return "$root$nullable"
             else
                 return "$root<${args.joinToString(", ")}>$nullable"
+        }
+
+        /**
+         * Returns the declaration to fill in for a type parameter. This is the single upper bound (where clauses not
+         * yet/ever supported) or the universally satisfiable type Any?.
+         */
+        fun computeBound(type: ProtoBuf.Type): String {
+            // Assert that the call is at the correct site
+            check(type.hasTypeParameter())
+
+            // Get the corresponding argument from the class head
+            val arg = typeEnvironment.typeArguments[type.typeParameter]
+
+            // Find the declaration for the single upper bound, or return "Any?"
+            return arg.upperBoundList.map { computeDeclaration(it) }.singleOrNull() ?: "Any?"
         }
 
         fun funneler(type: ProtoBuf.Type) =
@@ -517,6 +576,9 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         val environment = TypeEnvironment(element)
         val mapper = FunnelerMapper(environment)
 
+        // Check if element is a class TODO: Also support enums
+        check(environment.isClass, { "Funnelable element must be a class" })
+
         // Create file content
         src(nameGenerated, "kt") {
             fun writeFunnelers() {
@@ -524,7 +586,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 for (t in environment.requiredTypes.filter { !mapper.isPrimitive(it) }) {
                     // Compute the declaration and the type
                     val label = mapper.funneler(t)
-                    val decl = mapper.computeDeclaration(t, true)
+                    val decl = if (t.hasTypeParameter()) mapper.computeBound(t) else mapper.computeDeclaration(t, true)
                     val type = mapper.computeType(t, true)
                     // Write a value with the funneler for that declaration
                     writeTrimmed("""
@@ -533,6 +595,12 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       val $label = module.resolve<$decl>(${label}_type)""")
                 }
             }
+
+            // Compute the star projection type argument list
+            val liftedTypeArgs = if (environment.typeArguments.isEmpty())
+                ""
+            else
+                "<" + environment.typeArguments.joinToString(", ") { "*" } + ">"
 
             // First segment before sequential read, contains imports and declaration of the class
             writeTrimmed("""
@@ -543,49 +611,105 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |/**
         | * Funnels and unfunnels $target.
         | */
-        |object ${nameGenerated.className} : GeneratedFunneler<$target> {
+        |object ${nameGenerated.className} : GeneratedFunneler<$target$liftedTypeArgs> {
         |   override val module = ${moduleName.joined}
         |
         |   override val type = $target::class
         |
-        |   override fun read(module: Module, type: Type, source: SeqSource): $target {""")
+        |   override fun read(module: Module, type: Type, source: SeqSource): $target$liftedTypeArgs {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
             // Read from sequential source /////////////////////////////////////////////////////////////////
             ////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // Write the funnelers used by this method
-            writeFunnelers()
+            if (environment.isInstanitable) {
+                // Write the funnelers used by this method
+                writeFunnelers()
 
-            // Handle a primary constructor that assigns properties
-            environment.withPrimaryConstructor {
-                for ((i, p) in it.valueParameterList.withIndex())
-                    if (mapper.isPrimitive(p.type)) {
-                        // Get reader
-                        val reader = mapper.getPrimitive(p.type)
+                // Handle a primary constructor that assigns properties
+                environment.withPrimaryConstructor {
+                    for ((i, p) in it.valueParameterList.withIndex())
+                        if (mapper.isPrimitive(p.type)) {
+                            // Get reader
+                            val reader = mapper.getPrimitive(p.type)
 
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
+                            if (p.type.nullable)
+                            // Write the reading fragment for nullable
+                                writeTrimmed("""
         |
         |       val entry$i = if(source.isNull()) null else source.$reader()""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
+                            else
+                            // Write the reading fragment for non-nullable
+                                writeTrimmed("""
         |
         |       val entry$i = source.$reader()""")
-                    } else {
-                        // Get funneler
-                        val label = mapper.funneler(p.type)
+                        } else {
+                            // Get funneler
+                            val label = mapper.funneler(p.type)
 
-                        if (p.type.nullable)
-                        // Write the nested reading fragment for nullable
-                            writeTrimmed("""
+                            if (p.type.nullable)
+                            // Write the nested reading fragment for nullable
+                                writeTrimmed("""
         |
         |       val entry$i = source.readIfNotNull {
         |           source.beginNested()
         |           val r = $label.read(module, ${label}_type, source)
+        |           source.endNested()
+        |           r
+        |       }""")
+                            else
+                            // Write the nested reading fragment for non-nullable
+                                writeTrimmed("""
+        |
+        |       source.beginNested()
+        |       val entry$i = $label.read(module, ${label}_type, source)
+        |       source.endNested()""")
+                        }
+
+                    val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
+
+                    writeTrimmed("""
+        |
+        |       return $target($arguments).apply {""")
+
+                }
+
+                // Handle an empty primary constructor
+                if (environment.primaryConstructor == null) {
+                    writeTrimmed("""
+        |
+        |       return $target().apply {""")
+                }
+
+                for (p in environment.postVariables)
+                    if (mapper.isPrimitive(p.returnType)) {
+                        // Get property name and reader
+                        val name = environment.nameResolver.getString(p.name)
+                        val reader = mapper.getPrimitive(p.returnType)
+
+                        if (p.returnType.nullable)
+                        // Write the reading fragment for nullable
+                            writeTrimmed("""
+        |
+        |       $name = if(source.isNull()) null else source.$reader()""")
+                        else
+                        // Write the reading fragment for non-nullable
+                            writeTrimmed("""
+        |
+        |       $name = source.$reader()""")
+                    } else {
+                        // Get property name and funneler
+                        val name = environment.nameResolver.getString(p.name)
+                        val label = mapper.funneler(p.returnType)
+
+                        if (p.returnType.nullable)
+                        // Write the nested reading fragment for nullable
+                            writeTrimmed("""
+        |
+        |       $name = source.readIfNotNull {
+        |           source.beginNested()
+        |           r = $label.read(module, ${label}_type, source)
         |           source.endNested()
         |           r
         |       }""")
@@ -594,157 +718,120 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             writeTrimmed("""
         |
         |       source.beginNested()
-        |       val entry$i = $label.read(module, ${label}_type, source)
+        |       $name = $label.read(module, ${label}_type, source)
         |       source.endNested()""")
                     }
 
-                val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
-
                 writeTrimmed("""
         |
-        |       return $target($arguments).apply {""")
-
-            }
-
-            // Handle an empty primary constructor
-            if (environment.primaryConstructor == null) {
+        |       }
+                """)
+            } else {
                 writeTrimmed("""
         |
-        |       return $target().apply {""")
+        |       throw UnsupportedOperationException("Class is abstract")
+                """)
             }
-
-            for (p in environment.postVariables)
-                if (mapper.isPrimitive(p.returnType)) {
-                    // Get property name and reader
-                    val name = environment.nameResolver.getString(p.name)
-                    val reader = mapper.getPrimitive(p.returnType)
-
-                    if (p.returnType.nullable)
-                    // Write the reading fragment for nullable
-                        writeTrimmed("""
-        |
-        |       $name = if(source.isNull()) null else source.$reader()""")
-                    else
-                    // Write the reading fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       $name = source.$reader()""")
-                } else {
-                    // Get property name and funneler
-                    val name = environment.nameResolver.getString(p.name)
-                    val label = mapper.funneler(p.returnType)
-
-                    if (p.returnType.nullable)
-                    // Write the nested reading fragment for nullable
-                        writeTrimmed("""
-        |
-        |       $name = source.readIfNotNull {
-        |           source.beginNested()
-        |           r = $label.read(module, ${label}_type, source)
-        |           source.endNested()
-        |           r
-        |       }""")
-                    else
-                    // Write the nested reading fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       source.beginNested()
-        |       $name = $label.read(module, ${label}_type, source)
-        |       source.endNested()""")
-                }
-
 
             writeTrimmed("""
         |
-        |       }
         |   }
         |
-        |   override fun read(module: Module, type: Type, source: LabelSource): $target {""")
+        |   override fun read(module: Module, type: Type, source: LabelSource): $target$liftedTypeArgs {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
             // Read from labeled source ////////////////////////////////////////////////////////////////////
             ////////////////////////////////////////////////////////////////////////////////////////////////
+            if (environment.isInstanitable) {
+                // Write the funnelers used by this method
+                writeFunnelers()
 
-            // Write the funnelers used by this method
-            writeFunnelers()
+                // Handle a primary constructor that assigns properties
+                environment.withPrimaryConstructor {
+                    for ((i, p) in it.valueParameterList.withIndex())
+                        if (mapper.isPrimitive(p.type)) {
+                            // Get property name and reader
+                            val name = environment.nameResolver.getString(p.name)
+                            val reader = mapper.getPrimitive(p.type)
 
-            // Handle a primary constructor that assigns properties
-            environment.withPrimaryConstructor {
-                for ((i, p) in it.valueParameterList.withIndex())
-                    if (mapper.isPrimitive(p.type)) {
-                        // Get property name and reader
-                        val name = environment.nameResolver.getString(p.name)
-                        val reader = mapper.getPrimitive(p.type)
-
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
+                            if (p.type.nullable)
+                            // Write the reading fragment for nullable
+                                writeTrimmed("""
         |
         |       val entry$i = if(source.isNull("$name")) null else source.$reader("$name")""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
+                            else
+                            // Write the reading fragment for non-nullable
+                                writeTrimmed("""
         |
         |       val entry$i = source.$reader("$name")""")
-                    } else {
-                        // Get property name and funneler
-                        val name = environment.nameResolver.getString(p.name)
-                        val label = mapper.funneler(p.type)
+                        } else {
+                            // Get property name and funneler
+                            val name = environment.nameResolver.getString(p.name)
+                            val label = mapper.funneler(p.type)
 
-                        // Write the nested reading fragment
-                        writeTrimmed("""
+                            // Write the nested reading fragment
+                            writeTrimmed("""
         |
         |       source.beginNested("$name")
         |       val entry$i = $label.read(module, ${label}_type, source)
         |       source.endNested()""")
-                    }
+                        }
 
-                val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
+                    val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
 
-                writeTrimmed("""
+                    writeTrimmed("""
         |
         |       return $target($arguments).apply {""")
 
-            }
+                }
 
-            // Handle an empty primary constructor
-            if (environment.primaryConstructor == null) {
-                writeTrimmed("""
+                // Handle an empty primary constructor
+                if (environment.primaryConstructor == null) {
+                    writeTrimmed("""
         |
         |       return $target().apply {""")
-            }
+                }
 
-            for (p in environment.postVariables)
-                if (mapper.isPrimitive(p.returnType)) {
-                    // Get property name and reader
-                    val name = environment.nameResolver.getString(p.name)
-                    val reader = mapper.getPrimitive(p.returnType)
+                for (p in environment.postVariables)
+                    if (mapper.isPrimitive(p.returnType)) {
+                        // Get property name and reader
+                        val name = environment.nameResolver.getString(p.name)
+                        val reader = mapper.getPrimitive(p.returnType)
 
-                    // Write the reading fragment, target the receiver
-                    writeTrimmed("""
+                        // Write the reading fragment, target the receiver
+                        writeTrimmed("""
         |
         |           $name = source.$reader("$name")""")
-                } else {
-                    // Get property name and funneler
-                    val name = environment.nameResolver.getString(p.name)
-                    val label = mapper.funneler(p.returnType)
+                    } else {
+                        // Get property name and funneler
+                        val name = environment.nameResolver.getString(p.name)
+                        val label = mapper.funneler(p.returnType)
 
-                    // Write the nested reading fragment, target the receiver
-                    writeTrimmed("""
+                        // Write the nested reading fragment, target the receiver
+                        writeTrimmed("""
         |
         |           source.beginNested("$name")
         |           $name = $label.read(module, ${label}_type, source)
         |           source.endNested()""")
-                }
+                    }
 
+                writeTrimmed("""
+        |
+        |       }
+                """)
+            } else {
+                writeTrimmed("""
+        |
+        |       throw UnsupportedOperationException("Class is abstract")
+                """)
+            }
 
             writeTrimmed("""
         |
-        |       }
         |   }
         |
-        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target) {""")
+        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target$liftedTypeArgs) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -868,7 +955,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   }
         |
-        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target) {""")
+        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target$liftedTypeArgs) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -994,4 +1081,19 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         """)
         }
     }
+
+    private fun note(message: () -> Any?) =
+            processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, message()?.toString())
+
+    private fun error(message: () -> Any?) =
+            processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, message()?.toString())
+
+    private fun warn(message: () -> Any?) =
+            processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, message()?.toString())
+
+    private fun mandatoryWarn(message: () -> Any?) =
+            processingEnv.messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, message()?.toString())
+
+    private fun other(message: () -> Any?) =
+            processingEnv.messager.printMessage(Diagnostic.Kind.OTHER, message()?.toString())
 }

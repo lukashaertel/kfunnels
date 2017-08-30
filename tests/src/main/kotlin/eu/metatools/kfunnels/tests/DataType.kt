@@ -3,7 +3,9 @@ package eu.metatools.kfunnels.tests
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.*
 import java.util.*
+import kotlin.reflect.full.findAnnotation
 
+/*
 @Funnelable
 data class DataType(
         val x1: Boolean,
@@ -23,10 +25,23 @@ data class DataType(
 @Funnelable
 data class Rec(
         val a: Int,
-        val b: Rec?)
+        val b: Rec?)*/
+
+@Funnelable
+data class Container<T, U>(val t: T?, val u: U)
 
 fun main(args: Array<String>) {
 
+    val c1 = Container<Int?, String>(100, "Hello")
+    val c2 = Container<Int?, String>(null, "World")
+
+    val t = Type(Container::class, false, listOf(-Type.int, Type.string))
+
+    val f = TestsModule.std.resolve<Container<Int?, String>>(t)
+
+    f.write(TestsModule.std, t, PrintLabelSink, c1)
+    f.write(TestsModule.std, t, PrintLabelSink, c2)
+/*
     // Make data item
     val original = DataType(true, 23, 43, 124, 512313L, null, 2.0, 'a', Unit, "Hallo", listOf(1, 2, 3))
     original.x12 = 5555
@@ -62,5 +77,5 @@ fun main(args: Array<String>) {
     }
 
     println(recFwdBwd)
-    println()
+    println()*/
 }
