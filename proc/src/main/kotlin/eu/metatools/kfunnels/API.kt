@@ -213,9 +213,30 @@ fun <T> LabelSource.readIfNotNull(label: String, block: () -> T): T? {
 }
 
 /**
+ * Base interface for sources and sinks.
+ */
+interface Pivot
+
+/**
+ * Marker interface for sequential sources and sinks.
+ */
+interface Sequential
+
+
+/**
+ * Marker interface for labeled sources and sinks.
+ */
+interface Labeled
+
+/**
+ * Marker interface for sources.
+ */
+interface Source : Pivot
+
+/**
  * A source that provides values by sequence.
  */
-interface SeqSource {
+interface SeqSource : Sequential, Source {
     /**
      * Gets the next element, will throw an exception if not at the correct position.
      */
@@ -282,10 +303,11 @@ interface SeqSource {
     fun endNested()
 }
 
+
 /**
  * A source that provides values by label.
  */
-interface LabelSource {
+interface LabelSource : Labeled, Source {
     /**
      * Gets the value for the label, will throw an exception if element is not present.
      */
@@ -349,13 +371,18 @@ interface LabelSource {
     /**
      * Leaves the nesting.
      */
-    fun endNested()
+    fun endNested(label: String)
 }
+
+/**
+ * Marker interface for sinks.
+ */
+interface Sink : Pivot
 
 /**
  * A sink that uses sequence to match up values.
  */
-interface SeqSink {
+interface SeqSink : Sequential, Sink {
     /**
      * Writes the given element to the sequence.
      */
@@ -425,7 +452,7 @@ interface SeqSink {
 /**
  * A sink that uses labels match up values.
  */
-interface LabelSink {
+interface LabelSink : Labeled, Sink {
     /**
      * Writes the given element to the given label.
      */
@@ -489,5 +516,49 @@ interface LabelSink {
     /**
      * Indicates leaving the last nested element.
      */
-    fun endNested()
+    fun endNested(label: String)
+}
+
+/**
+ * Boundary marker. TODO: Pull boundaries into the [Pivot]s?
+ */
+interface Boundaries {
+    /**
+     * Called on the start of a complex object.
+     * @param type The type that is started
+     */
+    fun startEntire(type: Type)
+
+    /**
+     * Called on the end of a complex object.
+     */
+    fun endEntire(type: Type)
+}
+
+/**
+ * Marks the start if the receiver supports boundaries.
+ * @param type The type that is started
+ */
+fun Pivot.markStart(type: Type) {
+    if (this is Boundaries)
+        startEntire(type)
+}
+
+/**
+ * Marks the end if the receiver supports boundaries.
+ * @param type The type that is ended
+ */
+fun Pivot.markEnd(type: Type) {
+    if (this is Boundaries)
+        endEntire(type)
+}
+
+/**
+ * Marks start and end around the [block] using [markStart] and [markEnd].
+ */
+inline fun <T> Pivot.markAround(type: Type, block: () -> T): T {
+    markStart(type)
+    val r = block()
+    markEnd(type)
+    return r
 }

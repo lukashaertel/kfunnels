@@ -2,13 +2,13 @@ package eu.metatools.kfunnels.base.sets
 
 import eu.metatools.kfunnels.*
 
-class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler<MutableSet<Any?>> {
+class MutableSetNullableFunneler(val create: () -> MutableSet<Any?>) : Funneler<MutableSet<Any?>> {
     /**
      * Computes the positional label for an item.
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module,type: Type, source: SeqSource): MutableSet<Any?> {
+    override fun read(module: Module, type: Type, source: SeqSource): MutableSet<Any?> = source.markAround(type) {
         // Length is always needed
         val length = source.getInt()
 
@@ -80,7 +80,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
                         r.add(null)
                     else {
                         source.beginNested()
-                        r += sub.read(module, type.arg,source)
+                        r += sub.read(module, type.arg, source)
                         source.endNested()
                     }
                 }
@@ -89,7 +89,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
         }
     }
 
-    override fun read(module: Module, type: Type,source: LabelSource): MutableSet<Any?> {
+    override fun read(module: Module, type: Type, source: LabelSource): MutableSet<Any?> = source.markAround(type) {
         // Length is always needed
         val length = source.getInt("length")
 
@@ -162,7 +162,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
                     else {
                         source.beginNested(it.toLabel())
                         r += sub.read(module, type.arg, source)
-                        source.endNested()
+                        source.endNested(it.toLabel())
                     }
                 }
                 return r
@@ -170,7 +170,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
         }
     }
 
-    override fun write(module: Module, type: Type,sink: SeqSink, item: MutableSet<Any?>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: MutableSet<Any?>) = sink.markAround(type) {
 
         sink.putInt(item.size)
 
@@ -284,7 +284,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
         }
     }
 
-    override fun write(module: Module,type: Type, sink: LabelSink, item: MutableSet<Any?>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: MutableSet<Any?>) = sink.markAround(type) {
 
         sink.putInt("length", item.size)
 
@@ -392,7 +392,7 @@ class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler
                         sink.putNull(i.toLabel(), false)
                         sink.beginNested(i.toLabel())
                         sub.write(module, type.arg, sink, it)
-                        sink.endNested()
+                        sink.endNested(i.toLabel())
                     }
             }
         }

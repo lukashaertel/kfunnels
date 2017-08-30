@@ -106,7 +106,7 @@ object PrintLabelSink : LabelSink {
         println("Begin nested $label")
     }
 
-    override fun endNested() {
-        println("End nested")
+    override fun endNested(label: String) {
+        println("End nested $label")
     }
 }

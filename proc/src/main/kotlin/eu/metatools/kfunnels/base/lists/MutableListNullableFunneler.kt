@@ -8,7 +8,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): MutableList<Any?> {
+    override fun read(module: Module, type: Type, source: SeqSource): MutableList<Any?> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt()
@@ -90,7 +90,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
         }
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): MutableList<Any?> {
+    override fun read(module: Module, type: Type, source: LabelSource): MutableList<Any?> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt("length")
@@ -164,7 +164,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
                     else {
                         source.beginNested(it.toLabel())
                         r += sub.read(module, type.arg, source)
-                        source.endNested()
+                        source.endNested(it.toLabel())
                     }
                 }
                 return r
@@ -172,7 +172,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
         }
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: MutableList<Any?>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: MutableList<Any?>) = sink.markAround(type) {
 
 
         sink.putInt(item.size)
@@ -287,7 +287,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
         }
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: MutableList<Any?>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: MutableList<Any?>) = sink.markAround(type) {
 
 
         sink.putInt("length", item.size)
@@ -396,7 +396,7 @@ class MutableListNullableFunneler(val create: () -> MutableList<Any?>) : Funnele
                         sink.putNull(i.toLabel(), false)
                         sink.beginNested(i.toLabel())
                         sub.write(module, type.arg, sink, it)
-                        sink.endNested()
+                        sink.endNested(i.toLabel())
                     }
             }
         }

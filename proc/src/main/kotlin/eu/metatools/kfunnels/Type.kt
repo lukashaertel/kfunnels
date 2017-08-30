@@ -3,6 +3,7 @@ package eu.metatools.kfunnels
 import com.google.common.reflect.TypeToken
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.WildcardType
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -148,6 +149,10 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
                 return Type(Array<Any?>::class, false, listOf(arg))
             }
 
+            //  For wildcard type, assume that it has one single upper bound, otherwise it cannot be easily converted
+            if (type is WildcardType)
+                return from(type.upperBounds.single())
+
             // Cast to class and return as type
             return Type((type as Class<*>).kotlin, false, listOf())
         }
@@ -247,4 +252,9 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
         else
             null
     }
+
+    /**
+     * Returns true if this type is primitive.
+     */
+    fun isPrimitive() = primitiveCode != null
 }

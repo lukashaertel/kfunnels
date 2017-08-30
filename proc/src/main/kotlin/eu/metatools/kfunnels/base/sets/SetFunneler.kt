@@ -8,7 +8,7 @@ object SetFunneler : Funneler<Set<Any>> {
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): Set<Any> {
+    override fun read(module: Module, type: Type, source: SeqSource): Set<Any> = source.markAround(type) {
         // Length is always needed
         val length = source.getInt()
 
@@ -61,7 +61,7 @@ object SetFunneler : Funneler<Set<Any>> {
 
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): Set<Any> {
+    override fun read(module: Module, type: Type, source: LabelSource): Set<Any> = source.markAround(type) {
         // Length is always needed
         val length = source.getInt("length")
 
@@ -106,14 +106,14 @@ object SetFunneler : Funneler<Set<Any>> {
                 return (1..length).map {
                     source.beginNested(it.toLabel())
                     val result = sub.read(module, type.arg, source)
-                    source.endNested()
+                    source.endNested(it.toLabel())
                     result
                 }.toSet()
             }
         }
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Set<Any>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: Set<Any>) = sink.markAround(type) {
 
         sink.putInt(item.size)
 
@@ -173,7 +173,7 @@ object SetFunneler : Funneler<Set<Any>> {
         }
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Set<Any>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: Set<Any>) = sink.markAround(type) {
 
         sink.putInt("length", item.size)
 
@@ -227,7 +227,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 for ((i, it) in item.withIndex()) {
                     sink.beginNested(i.toLabel())
                     sub.write(module, type.arg, sink, it)
-                    sink.endNested()
+                    sink.endNested(i.toLabel())
                 }
             }
         }

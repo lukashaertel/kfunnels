@@ -616,7 +616,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   override val type = $target::class
         |
-        |   override fun read(module: Module, type: Type, source: SeqSource): $target$liftedTypeArgs {""")
+        |   override fun read(module: Module, type: Type, source: SeqSource)
+        |       : $target$liftedTypeArgs = source.markAround(type) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -624,6 +625,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
             ////////////////////////////////////////////////////////////////////////////////////////////////
 
             if (environment.isInstanitable) {
+
                 // Write the funnelers used by this method
                 writeFunnelers()
 
@@ -737,7 +739,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   }
         |
-        |   override fun read(module: Module, type: Type, source: LabelSource): $target$liftedTypeArgs {""")
+        |   override fun read(module: Module, type: Type, source: LabelSource)
+        |       : $target$liftedTypeArgs = source.markAround(type) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -775,7 +778,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       source.beginNested("$name")
         |       val entry$i = $label.read(module, ${label}_type, source)
-        |       source.endNested()""")
+        |       source.endNested("$name")""")
                         }
 
                     val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
@@ -813,7 +816,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |           source.beginNested("$name")
         |           $name = $label.read(module, ${label}_type, source)
-        |           source.endNested()""")
+        |           source.endNested("$name")""")
                     }
 
                 writeTrimmed("""
@@ -831,7 +834,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   }
         |
-        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target$liftedTypeArgs) {""")
+        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target$liftedTypeArgs)
+        |       = sink.markAround(type) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -955,7 +959,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   }
         |
-        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target$liftedTypeArgs) {""")
+        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target$liftedTypeArgs)
+        |       = sink.markAround(type) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1004,7 +1009,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |           sink.putNull("$name", false)
         |           sink.beginNested("$name")
         |           $label.write(module, ${label}_type, sink, item.$name)
-        |           sink.endNested()
+        |           sink.endNested("$name")
         |       }""")
                         else
                         // Write the reading fragment for non-nullable
@@ -1012,7 +1017,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       sink.beginNested("$name")
         |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
+        |       sink.endNested("$name")""")
                     }
 
             }
@@ -1049,7 +1054,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       sink.beginNested("$name")
         |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
+        |       sink.endNested("$name")""")
 
                     if (p.returnType.nullable)
                     // Write the nested writing fragment for nullable
@@ -1062,7 +1067,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |           sink.putNull("$name", false)
         |           sink.beginNested("$name")
         |           $label.write(module, ${label}_type, sink, capture_$name)
-        |           sink.endNested()
+        |           sink.endNested("$name")
         |       }""")
                     else
                     // Write the nested writing fragment for non-nullable
@@ -1070,7 +1075,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       sink.beginNested("$name")
         |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
+        |       sink.endNested("$name")""")
                 }
 
 

@@ -8,7 +8,7 @@ object ListFunneler : Funneler<List<Any>> {
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): List<Any> {
+    override fun read(module: Module, type: Type, source: SeqSource): List<Any> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt()
@@ -62,7 +62,7 @@ object ListFunneler : Funneler<List<Any>> {
 
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): List<Any> {
+    override fun read(module: Module, type: Type, source: LabelSource): List<Any> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt("length")
@@ -108,14 +108,14 @@ object ListFunneler : Funneler<List<Any>> {
                 return (1..length).map {
                     source.beginNested(it.toLabel())
                     val result = sub.read(module, type.arg, source)
-                    source.endNested()
+                    source.endNested(it.toLabel())
                     result
                 }
             }
         }
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any>) = sink.markAround(type) {
 
         sink.putInt(item.size)
 
@@ -175,7 +175,7 @@ object ListFunneler : Funneler<List<Any>> {
         }
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any>) = sink.markAround(type) {
 
         sink.putInt("length", item.size)
 
@@ -229,7 +229,7 @@ object ListFunneler : Funneler<List<Any>> {
                 for ((i, it) in item.withIndex()) {
                     sink.beginNested(i.toLabel())
                     sub.write(module, type.arg, sink, it)
-                    sink.endNested()
+                    sink.endNested(i.toLabel())
                 }
             }
         }

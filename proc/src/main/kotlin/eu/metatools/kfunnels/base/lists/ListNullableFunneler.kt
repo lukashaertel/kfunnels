@@ -8,7 +8,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): List<Any?> {
+    override fun read(module: Module, type: Type, source: SeqSource): List<Any?> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt()
@@ -66,7 +66,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
 
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): List<Any?> {
+    override fun read(module: Module, type: Type, source: LabelSource): List<Any?> = source.markAround(type) {
 
         // Length is always needed
         val length = source.getInt("length")
@@ -115,7 +115,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                     else {
                         source.beginNested(it.toLabel())
                         val result = sub.read(module, type.arg, source)
-                        source.endNested()
+                        source.endNested(it.toLabel())
                         result
                     }
                 }
@@ -123,7 +123,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
         }
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any?>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any?>) = sink.markAround(type) {
 
         sink.putInt(item.size)
 
@@ -237,7 +237,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
         }
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any?>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any?>) = sink.markAround(type) {
 
         sink.putInt("length", item.size)
 
@@ -345,7 +345,7 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                         sink.putNull(i.toLabel(), false)
                         sink.beginNested(i.toLabel())
                         sub.write(module, type.arg, sink, it)
-                        sink.endNested()
+                        sink.endNested(i.toLabel())
                     }
             }
         }
