@@ -60,24 +60,24 @@ object StdlibModule : Module {
             MutableList::class,
             ArrayList::class ->
                 if (type.arg.nullable)
-                    return MutableListNullableFunneler(type.arg, ::ArrayList) as Funneler<T>
+                    return MutableListNullableFunneler(::ArrayList) as Funneler<T>
                 else
-                    return MutableListFunneler(type.arg, ::ArrayList) as Funneler<T>
+                    return MutableListFunneler(::ArrayList) as Funneler<T>
 
         // Linked list
             LinkedList::class ->
                 if (type.arg.nullable)
-                    return MutableListNullableFunneler(type.arg, ::LinkedList) as Funneler<T>
+                    return MutableListNullableFunneler(::LinkedList) as Funneler<T>
                 else
-                    return MutableListFunneler(type.arg, ::LinkedList) as Funneler<T>
+                    return MutableListFunneler(::LinkedList) as Funneler<T>
 
         // Immutable list, also default for immutable collection
             Collection::class,
             List::class ->
                 if (type.arg.nullable)
-                    return ListNullableFunneler(type.arg) as Funneler<T>
+                    return ListNullableFunneler as Funneler<T>
                 else
-                    return ListFunneler(type.arg) as Funneler<T>
+                    return ListFunneler as Funneler<T>
         }
 
 
@@ -88,25 +88,26 @@ object StdlibModule : Module {
             MutableSet::class,
             HashSet::class ->
                 if (type.arg.nullable)
-                    return MutableSetNullableFunneler(type.arg, ::HashSet) as Funneler<T>
+                    return MutableSetNullableFunneler(::HashSet) as Funneler<T>
                 else
-                    return MutableSetFunneler(type.arg, ::HashSet) as Funneler<T>
+                    return MutableSetFunneler(::HashSet) as Funneler<T>
 
         // Tree set
             TreeSet::class ->
                 if (type.arg.nullable)
-                    return MutableSetNullableFunneler(type.arg, ::TreeSet) as Funneler<T>
+                    return MutableSetNullableFunneler(::TreeSet) as Funneler<T>
                 else
-                    return MutableSetFunneler(type.arg, ::TreeSet) as Funneler<T>
+                    return MutableSetFunneler(::TreeSet) as Funneler<T>
 
         // Immutable set
             Set::class ->
                 if (type.arg.nullable)
-                    return SetNullableFunneler(type.arg) as Funneler<T>
+                    return SetNullableFunneler as Funneler<T>
                 else
-                    return SetFunneler(type.arg) as Funneler<T>
+                    return SetFunneler as Funneler<T>
         }
 
+        @Suppress("unchecked_cast")
         return NoFunneler as Funneler<T>
     }
 }

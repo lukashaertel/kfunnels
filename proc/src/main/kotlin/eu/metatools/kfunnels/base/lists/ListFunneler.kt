@@ -2,19 +2,20 @@ package eu.metatools.kfunnels.base.lists
 
 import eu.metatools.kfunnels.*
 
-class ListFunneler(val type: Type) : Funneler<List<Any>> {
+object ListFunneler : Funneler<List<Any>> {
     /**
      * Computes the positional label for an item.
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, source: SeqSource): List<Any> {
+    override fun read(module: Module, type: Type, source: SeqSource): List<Any> {
+
         // Length is always needed
         val length = source.getInt()
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 return (1..length).map { source.getBoolean() }
 
@@ -47,12 +48,12 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements
                 return (1..length).map {
                     source.beginNested()
-                    val result = sub.read(module, source)
+                    val result = sub.read(module, type.arg, source)
                     source.endNested()
                     result
                 }
@@ -61,13 +62,14 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
 
     }
 
-    override fun read(module: Module, source: LabelSource): List<Any> {
+    override fun read(module: Module, type: Type, source: LabelSource): List<Any> {
+
         // Length is always needed
         val length = source.getInt("length")
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 return (1..length).map { source.getBoolean(it.toLabel()) }
 
@@ -100,12 +102,12 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements
                 return (1..length).map {
                     source.beginNested(it.toLabel())
-                    val result = sub.read(module, source)
+                    val result = sub.read(module, type.arg, source)
                     source.endNested()
                     result
                 }
@@ -113,12 +115,12 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
         }
     }
 
-    override fun write(module: Module, sink: SeqSink, item: List<Any>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any>) {
 
         sink.putInt(item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for (it in item as List<Boolean>)
                     sink.putBoolean(it)
@@ -161,24 +163,24 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for (it in item) {
                     sink.beginNested()
-                    sub.write(module, sink, it)
+                    sub.write(module, type.arg, sink, it)
                     sink.endNested()
                 }
             }
         }
     }
 
-    override fun write(module: Module, sink: LabelSink, item: List<Any>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any>) {
 
         sink.putInt("length", item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for ((i, it) in (item as List<Boolean>).withIndex())
                     sink.putBoolean(i.toLabel(), it)
@@ -221,12 +223,12 @@ class ListFunneler(val type: Type) : Funneler<List<Any>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for ((i, it) in item.withIndex()) {
                     sink.beginNested(i.toLabel())
-                    sub.write(module, sink, it)
+                    sub.write(module, type.arg, sink, it)
                     sink.endNested()
                 }
             }

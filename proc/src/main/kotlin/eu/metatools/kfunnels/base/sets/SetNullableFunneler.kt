@@ -2,19 +2,19 @@ package eu.metatools.kfunnels.base.sets
 
 import eu.metatools.kfunnels.*
 
-class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
+object SetNullableFunneler : Funneler<Set<Any?>> {
     /**
      * Computes the positional label for an item.
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, source: SeqSource): Set<Any?> {
+    override fun read(module: Module, type: Type, source: SeqSource): Set<Any?> {
         // Length is always needed
         val length = source.getInt()
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 return (1..length).map { if (source.isNull()) null else source.getBoolean() }.toSet()
 
@@ -47,7 +47,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements
                 return (1..length).map {
@@ -55,7 +55,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
                         null
                     else {
                         source.beginNested()
-                        val result = sub.read(module, source)
+                        val result = sub.read(module, type.arg, source)
                         source.endNested()
                         result
                     }
@@ -65,13 +65,13 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
 
     }
 
-    override fun read(module: Module, source: LabelSource): Set<Any?> {
+    override fun read(module: Module, type: Type, source: LabelSource): Set<Any?> {
         // Length is always needed
         val length = source.getInt("length")
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 return (1..length).map { if (source.isNull(it.toLabel())) null else source.getBoolean(it.toLabel()) }.toSet()
 
@@ -104,7 +104,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements
                 return (1..length).map {
@@ -112,7 +112,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
                         null
                     else {
                         source.beginNested(it.toLabel())
-                        val result = sub.read(module, source)
+                        val result = sub.read(module, type.arg, source)
                         source.endNested()
                         result
                     }
@@ -121,12 +121,12 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
         }
     }
 
-    override fun write(module: Module, sink: SeqSink, item: Set<Any?>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: Set<Any?>) {
 
         sink.putInt(item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for (it in item as Set<Boolean?>)
                     if (it == null)
@@ -219,7 +219,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for (it in item)
@@ -228,19 +228,19 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
                     else {
                         sink.putNull(false)
                         sink.beginNested()
-                        sub.write(module, sink, it)
+                        sub.write(module, type.arg, sink, it)
                         sink.endNested()
                     }
             }
         }
     }
 
-    override fun write(module: Module, sink: LabelSink, item: Set<Any?>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: Set<Any?>) {
 
         sink.putInt("length", item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for ((i, it) in (item as Set<Boolean?>).withIndex())
                     if (it == null)
@@ -333,7 +333,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for ((i, it) in item.withIndex())
@@ -342,7 +342,7 @@ class SetNullableFunneler(val type: Type) : Funneler<Set<Any?>> {
                     else {
                         sink.putNull(i.toLabel(), false)
                         sink.beginNested(i.toLabel())
-                        sub.write(module, sink, it)
+                        sub.write(module, type.arg, sink, it)
                         sink.endNested()
                     }
             }

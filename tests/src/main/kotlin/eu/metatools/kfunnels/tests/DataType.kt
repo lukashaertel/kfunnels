@@ -63,6 +63,4 @@ fun main(args: Array<String>) {
 
     println(recFwdBwd)
     println()
-
-
 }

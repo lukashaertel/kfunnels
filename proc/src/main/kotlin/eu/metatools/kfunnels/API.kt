@@ -3,6 +3,7 @@ package eu.metatools.kfunnels
 import eu.metatools.kfunnels.base.NoFunneler
 import eu.metatools.kfunnels.base.NullableFunneler
 import eu.metatools.kfunnels.base.StdlibModule
+import kotlin.reflect.KClass
 
 /**
  * A module provides resolution of funneler from class.
@@ -22,7 +23,7 @@ interface GeneratedModule : Module {
     /**
      * List of supported types.
      */
-    val types: List<Type>
+    val types: List<GeneratedFunneler<*>>
 }
 
 /**
@@ -64,35 +65,35 @@ infix fun Module.then(nextModule: Module) = object : Module {
 }
 
 /**
- * Resolves the funneler for the given type (non-nullable, no arguments).
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
  */
-inline fun <reified T> Module.resolve(): Funneler<T> =
-        resolve(Type(T::class, false, listOf()))
+inline fun <reified T> Module.read(source: SeqSource): T {
+    val t = Type(T::class, false, listOf())
+    return resolve<T>(t).read(this, t, source)
+}
 
 /**
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
  */
-inline fun <reified T> Module.read(source: SeqSource): T =
-        resolve<T>().read(this, source)
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
- */
-inline fun <reified T> Module.read(source: LabelSource): T =
-        resolve<T>().read(this, source)
+inline fun <reified T> Module.read(source: LabelSource): T {
+    val t = Type(T::class, false, listOf())
+    return resolve<T>(t).read(this, t, source)
+}
 
 /**
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
  */
 inline fun <reified T> Module.write(sink: SeqSink, item: T) {
-    resolve<T>().write(this, sink, item)
+    val t = Type(T::class, false, listOf())
+    return resolve<T>(t).write(this, t, sink, item)
 }
 
 /**
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
  */
 inline fun <reified T> Module.write(sink: LabelSink, item: T) {
-    resolve<T>().write(this, sink, item)
+    val t = Type(T::class, false, listOf())
+    return resolve<T>(t).write(this, t, sink, item)
 }
 
 /**
@@ -101,39 +102,52 @@ inline fun <reified T> Module.write(sink: LabelSink, item: T) {
 interface Funneler<T> {
     /**
      * Uses the given module to read the item from the sequence source.
+     * @param module The module used to resolve nested funnelers
+     * @param type The actual type that the funneler is to read
+     * @param source The source to read from
      */
-    fun read(module: Module, source: SeqSource): T
+    fun read(module: Module, type: Type, source: SeqSource): T
 
     /**
      * Uses the given module to read the item from the label source.
+     * @param module The module used to resolve nested funnelers
+     * @param type The actual type that the funneler is to read
+     * @param source The source to read from
      */
-    fun read(module: Module, source: LabelSource): T
+    fun read(module: Module, type: Type, source: LabelSource): T
 
     /**
      * Uses the given module to write the item to the sequence sink.
+     * @param module The module used to resolve nested funnelers
+     * @param type The actual type that the funneler is to read
+     * @param sink The sink to write to
+     * @param item The item to write
      */
-    fun write(module: Module, sink: SeqSink, item: T)
+    fun write(module: Module, type: Type, sink: SeqSink, item: T)
 
     /**
      * Uses the given module to write the item to the label sink.
+     * @param module The module used to resolve nested funnelers
+     * @param type The actual type that the funneler is to read
+     * @param sink The sink to write to
+     * @param item The item to write
      */
-    fun write(module: Module, sink: LabelSink, item: T)
+    fun write(module: Module, type: Type, sink: LabelSink, item: T)
 }
 
 /**
  * Interface implemented by funnelers generated for classes.
  */
-interface GeneratedFunneler<T> : Funneler<T> {
+interface GeneratedFunneler<T : Any> : Funneler<T> {
     /**
      * Gets the module in which the funneler is registered.
      */
     val module: Module
 
     /**
-     * Type of this funneler.
-     * TODO: Type arguments maybe?
+     * Gets the raw type that the funneler serves.
      */
-    val type: Type
+    val type: KClass<T>
 }
 
 /**

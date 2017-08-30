@@ -165,14 +165,14 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         | */
         |object ${moduleName.className} : GeneratedModule {
         |
-        |   override val types = listOf(${funnelers.joinToString(", ") { it.joined + ".type" }})
+        |   override val types get() = listOf(${funnelers.joinToString(", ") { it.joined }})
         |
         |   override fun <T> resolve(type: Type): Funneler<T> {""")
                     for (funneler in funnelers)
                         writeTrimmed("""
         |
         |       @Suppress("unchecked_cast")
-        |       if(${funneler.joined}.type == type)
+        |       if(${funneler.joined}.type == type.kClass)
         |           return ${funneler.joined} as Funneler<T>""".trimIndent())
 
                     writeTrimmed("""
@@ -529,7 +529,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     // Write a value with the funneler for that declaration
                     writeTrimmed("""
         |
-        |       val $label = module.resolve<$decl>($type)""")
+        |       val ${label}_type = $type
+        |       val $label = module.resolve<$decl>(${label}_type)""")
                 }
             }
 
@@ -545,9 +546,9 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |object ${nameGenerated.className} : GeneratedFunneler<$target> {
         |   override val module = ${moduleName.joined}
         |
-        |   override val type = Type($target::class, false, listOf())
+        |   override val type = $target::class
         |
-        |   override fun read(module: Module, source: SeqSource): $target {""")
+        |   override fun read(module: Module, type: Type, source: SeqSource): $target {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -576,7 +577,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       val entry$i = source.$reader()""")
                     } else {
                         // Get funneler
-                        val funneler = mapper.funneler(p.type)
+                        val label = mapper.funneler(p.type)
 
                         if (p.type.nullable)
                         // Write the nested reading fragment for nullable
@@ -584,7 +585,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       val entry$i = source.readIfNotNull {
         |           source.beginNested()
-        |           val r = $funneler.read(module, source)
+        |           val r = $label.read(module, ${label}_type, source)
         |           source.endNested()
         |           r
         |       }""")
@@ -593,7 +594,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             writeTrimmed("""
         |
         |       source.beginNested()
-        |       val entry$i = $funneler.read(module, source)
+        |       val entry$i = $label.read(module, ${label}_type, source)
         |       source.endNested()""")
                     }
 
@@ -631,7 +632,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 } else {
                     // Get property name and funneler
                     val name = environment.nameResolver.getString(p.name)
-                    val funneler = mapper.funneler(p.returnType)
+                    val label = mapper.funneler(p.returnType)
 
                     if (p.returnType.nullable)
                     // Write the nested reading fragment for nullable
@@ -639,7 +640,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |       $name = source.readIfNotNull {
         |           source.beginNested()
-        |           r = $funneler.read(module, source)
+        |           r = $label.read(module, ${label}_type, source)
         |           source.endNested()
         |           r
         |       }""")
@@ -648,7 +649,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                         writeTrimmed("""
         |
         |       source.beginNested()
-        |       $name = $funneler.read(module, source)
+        |       $name = $label.read(module, ${label}_type, source)
         |       source.endNested()""")
                 }
 
@@ -658,7 +659,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       }
         |   }
         |
-        |   override fun read(module: Module, source: LabelSource): $target {""")
+        |   override fun read(module: Module, type: Type, source: LabelSource): $target {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -689,13 +690,13 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     } else {
                         // Get property name and funneler
                         val name = environment.nameResolver.getString(p.name)
-                        val funneler = mapper.funneler(p.type)
+                        val label = mapper.funneler(p.type)
 
                         // Write the nested reading fragment
                         writeTrimmed("""
         |
         |       source.beginNested("$name")
-        |       val entry$i = $funneler.read(module, source)
+        |       val entry$i = $label.read(module, ${label}_type, source)
         |       source.endNested()""")
                     }
 
@@ -727,13 +728,13 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 } else {
                     // Get property name and funneler
                     val name = environment.nameResolver.getString(p.name)
-                    val funneler = mapper.funneler(p.returnType)
+                    val label = mapper.funneler(p.returnType)
 
                     // Write the nested reading fragment, target the receiver
                     writeTrimmed("""
         |
         |           source.beginNested("$name")
-        |           $name = $funneler.read(module, source)
+        |           $name = $label.read(module, ${label}_type, source)
         |           source.endNested()""")
                 }
 
@@ -743,7 +744,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       }
         |   }
         |
-        |   override fun write(module: Module, sink: SeqSink, item: $target) {""")
+        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -792,7 +793,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       else {
         |           sink.putNull(false)
         |           sink.beginNested()
-        |           $label.write(module, sink, item.$name)
+        |           $label.write(module, ${label}_type, sink, item.$name)
         |           sink.endNested()
         |       }""")
                         else
@@ -800,7 +801,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             writeTrimmed("""
         |
         |       sink.beginNested()
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
                     }
 
@@ -837,7 +838,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     writeTrimmed("""
         |
         |       sink.beginNested()
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
 
                     if (p.returnType.nullable)
@@ -850,7 +851,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       else {
         |           sink.putNull(false)
         |           sink.beginNested()
-        |           $label.write(module, sink, capture_$name)
+        |           $label.write(module, ${label}_type, sink, capture_$name)
         |           sink.endNested()
         |       }""")
                     else
@@ -858,7 +859,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                         writeTrimmed("""
         |
         |       sink.beginNested()
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
                 }
 
@@ -867,7 +868,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |
         |   }
         |
-        |   override fun write(module: Module, sink: LabelSink, item: $target) {""")
+        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target) {""")
 
 
             ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -915,7 +916,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       else {
         |           sink.putNull("$name", false)
         |           sink.beginNested("$name")
-        |           $label.write(module, sink, item.$name)
+        |           $label.write(module, ${label}_type, sink, item.$name)
         |           sink.endNested()
         |       }""")
                         else
@@ -923,7 +924,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             writeTrimmed("""
         |
         |       sink.beginNested("$name")
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
                     }
 
@@ -960,7 +961,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     writeTrimmed("""
         |
         |       sink.beginNested("$name")
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
 
                     if (p.returnType.nullable)
@@ -973,7 +974,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |       else {
         |           sink.putNull("$name", false)
         |           sink.beginNested("$name")
-        |           $label.write(module, sink, capture_$name)
+        |           $label.write(module, ${label}_type, sink, capture_$name)
         |           sink.endNested()
         |       }""")
                     else
@@ -981,7 +982,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                         writeTrimmed("""
         |
         |       sink.beginNested("$name")
-        |       $label.write(module, sink, item.$name)
+        |       $label.write(module, ${label}_type, sink, item.$name)
         |       sink.endNested()""")
                 }
 

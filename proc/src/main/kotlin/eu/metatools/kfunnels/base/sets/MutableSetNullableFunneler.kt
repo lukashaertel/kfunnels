@@ -2,19 +2,19 @@ package eu.metatools.kfunnels.base.sets
 
 import eu.metatools.kfunnels.*
 
-class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<Any?>) : Funneler<MutableSet<Any?>> {
+class MutableSetNullableFunneler( val create: () -> MutableSet<Any?>) : Funneler<MutableSet<Any?>> {
     /**
      * Computes the positional label for an item.
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, source: SeqSource): MutableSet<Any?> {
+    override fun read(module: Module,type: Type, source: SeqSource): MutableSet<Any?> {
         // Length is always needed
         val length = source.getInt()
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
                 val r = create() as MutableSet<Boolean?>
                 repeat(length) { r += if (source.isNull()) null else source.getBoolean() }
@@ -71,7 +71,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements into mutable Set
                 val r = create()
@@ -80,7 +80,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
                         r.add(null)
                     else {
                         source.beginNested()
-                        r += sub.read(module, source)
+                        r += sub.read(module, type.arg,source)
                         source.endNested()
                     }
                 }
@@ -89,13 +89,13 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
         }
     }
 
-    override fun read(module: Module, source: LabelSource): MutableSet<Any?> {
+    override fun read(module: Module, type: Type,source: LabelSource): MutableSet<Any?> {
         // Length is always needed
         val length = source.getInt("length")
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
                 val r = create() as MutableSet<Boolean?>
                 repeat(length) { r += if (source.isNull(it.toLabel())) null else source.getBoolean(it.toLabel()) }
@@ -152,7 +152,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements into mutable Set
                 val r = create()
@@ -161,7 +161,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
                         r.add(null)
                     else {
                         source.beginNested(it.toLabel())
-                        r += sub.read(module, source)
+                        r += sub.read(module, type.arg, source)
                         source.endNested()
                     }
                 }
@@ -170,12 +170,12 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
         }
     }
 
-    override fun write(module: Module, sink: SeqSink, item: MutableSet<Any?>) {
+    override fun write(module: Module, type: Type,sink: SeqSink, item: MutableSet<Any?>) {
 
         sink.putInt(item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for (it in item as Set<Boolean?>)
                     if (it == null)
@@ -268,7 +268,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for (it in item)
@@ -277,19 +277,19 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
                     else {
                         sink.putNull(false)
                         sink.beginNested()
-                        sub.write(module, sink, it)
+                        sub.write(module, type.arg, sink, it)
                         sink.endNested()
                     }
             }
         }
     }
 
-    override fun write(module: Module, sink: LabelSink, item: MutableSet<Any?>) {
+    override fun write(module: Module,type: Type, sink: LabelSink, item: MutableSet<Any?>) {
 
         sink.putInt("length", item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for ((i, it) in (item as Set<Boolean?>).withIndex())
                     if (it == null)
@@ -382,7 +382,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for ((i, it) in item.withIndex())
@@ -391,7 +391,7 @@ class MutableSetNullableFunneler(val type: Type, val create: () -> MutableSet<An
                     else {
                         sink.putNull(i.toLabel(), false)
                         sink.beginNested(i.toLabel())
-                        sub.write(module, sink, it)
+                        sub.write(module, type.arg, sink, it)
                         sink.endNested()
                     }
             }

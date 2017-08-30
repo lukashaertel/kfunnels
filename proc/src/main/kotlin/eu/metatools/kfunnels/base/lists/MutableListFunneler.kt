@@ -2,19 +2,19 @@ package eu.metatools.kfunnels.base.lists
 
 import eu.metatools.kfunnels.*
 
-class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : Funneler<MutableList<Any>> {
+class MutableListFunneler(val create: () -> MutableList<Any>) : Funneler<MutableList<Any>> {
     /**
      * Computes the positional label for an item.
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, source: SeqSource): MutableList<Any> {
+    override fun read(module: Module, type: Type, source: SeqSource): MutableList<Any> {
         // Length is always needed
         val length = source.getInt()
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
                 val r = create() as MutableList<Boolean>
                 repeat(length) { r += source.getBoolean() }
@@ -71,13 +71,13 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements into mutable list
                 val r = create()
                 repeat(length) {
                     source.beginNested()
-                    r += sub.read(module, source)
+                    r += sub.read(module, type.arg, source)
                     source.endNested()
                 }
                 return r
@@ -85,13 +85,13 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
         }
     }
 
-    override fun read(module: Module, source: LabelSource): MutableList<Any> {
+    override fun read(module: Module, type: Type, source: LabelSource): MutableList<Any> {
         // Length is always needed
         val length = source.getInt("length")
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
                 val r = create() as MutableList<Boolean>
                 repeat(length) { r += source.getBoolean(it.toLabel()) }
@@ -148,13 +148,13 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Read as nested elements into mutable list
                 val r = create()
                 repeat(length) {
                     source.beginNested(it.toLabel())
-                    r += sub.read(module, source)
+                    r += sub.read(module, type.arg, source)
                     source.endNested()
                 }
                 return r
@@ -162,12 +162,12 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
         }
     }
 
-    override fun write(module: Module, sink: SeqSink, item: MutableList<Any>) {
+    override fun write(module: Module, type: Type, sink: SeqSink, item: MutableList<Any>) {
 
         sink.putInt(item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for (it in item as List<Boolean>)
                     sink.putBoolean(it)
@@ -210,24 +210,24 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for (it in item) {
                     sink.beginNested()
-                    sub.write(module, sink, it)
+                    sub.write(module, type.arg, sink, it)
                     sink.endNested()
                 }
             }
         }
     }
 
-    override fun write(module: Module, sink: LabelSink, item: MutableList<Any>) {
+    override fun write(module: Module, type: Type, sink: LabelSink, item: MutableList<Any>) {
 
         sink.putInt("length", item.size)
 
         @Suppress("unchecked_cast")
-        when (type.primitiveCode) {
+        when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
                 for ((i, it) in (item as List<Boolean>).withIndex())
                     sink.putBoolean(i.toLabel(), it)
@@ -270,12 +270,12 @@ class MutableListFunneler(val type: Type, val create: () -> MutableList<Any>) : 
 
             else -> {
                 // Resolve element funneler
-                val sub = module.resolve<Any>(type)
+                val sub = module.resolve<Any>(type.arg)
 
                 // Write nested
                 for ((i, it) in item.withIndex()) {
                     sink.beginNested(i.toLabel())
-                    sub.write(module, sink, it)
+                    sub.write(module, type.arg, sink, it)
                     sink.endNested()
                 }
             }

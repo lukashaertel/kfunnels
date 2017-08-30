@@ -1,4 +1,4 @@
-package eu.metatools.kfunnels
+package eu.metatools.kfunnels.utils
 
 import com.google.auto.common.BasicAnnotationProcessor
 import com.google.common.collect.SetMultimap
