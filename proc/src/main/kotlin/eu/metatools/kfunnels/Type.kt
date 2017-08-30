@@ -1,5 +1,8 @@
 package eu.metatools.kfunnels
 
+import com.google.common.reflect.TypeToken
+import java.lang.reflect.GenericArrayType
+import java.lang.reflect.ParameterizedType
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -127,6 +130,34 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
          * Constructs an immutable list type.
          */
         fun list(type: Type) = Type(List::class, false, listOf(type))
+
+        /**
+         * Translates a Java reflection type.
+         */
+        fun from(type: java.lang.reflect.Type): Type {
+            // For parameters, map the arguments
+            if (type is ParameterizedType) {
+                val base = type.rawType as Class<*>
+                val args = type.actualTypeArguments.map { from(it) }
+                return Type(base.kotlin, false, args)
+            }
+
+            // For generic arrays, use the compound type as an argument
+            if (type is GenericArrayType) {
+                val arg = from(type.genericComponentType)
+                return Type(Array<Any?>::class, false, listOf(arg))
+            }
+
+            // Cast to class and return as type
+            return Type((type as Class<*>).kotlin, false, listOf())
+        }
+
+        /**
+         * Analyzes the type and passes it to the Java reflection translator.
+         * **WARNING: Nullable marks are not supported by this method.**
+         */
+        inline fun <reified T> from() =
+                from(object : TypeToken<T>() {}.type)
     }
 
     /**
@@ -153,6 +184,39 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
      * Convenience method for the second type argument of two.
      */
     val value get() = args[1].apply { check(args.size == 2) }
+
+    /**
+     * Maps to a new type where the [arg] is nullable.
+     */
+    fun argNullable() = Type(kClass, nullable, listOf(-arg))
+
+    /**
+     * Maps to a new type where the [arg] is non-nullable.
+     */
+    fun argNonNullable() = Type(kClass, nullable, listOf(+arg))
+
+
+    /**
+     * Maps to a new type where the [key] is nullable.
+     */
+    fun keyNullable() = Type(kClass, nullable, listOf(-key, value))
+
+    /**
+     * Maps to a new type where the [key] is non-nullable.
+     */
+    fun keyNonNullable() = Type(kClass, nullable, listOf(+key, value))
+
+
+    /**
+     * Maps to a new type where the [value] is nullable.
+     */
+    fun valueNullable() = Type(kClass, nullable, listOf(key, -value))
+
+    /**
+     * Maps to a new type where the [value] is non-nullable.
+     */
+    fun valueNonNullable() = Type(kClass, nullable, listOf(key, +value))
+
 
     /**
      * The primitive code or null if not a primitive.

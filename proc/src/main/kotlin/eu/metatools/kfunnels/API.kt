@@ -65,34 +65,38 @@ infix fun Module.then(nextModule: Module) = object : Module {
 }
 
 /**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
+ * limitations.
  */
 inline fun <reified T> Module.read(source: SeqSource): T {
-    val t = Type(T::class, false, listOf())
+    val t = Type.from<T>()
     return resolve<T>(t).read(this, t, source)
 }
 
 /**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
+ * limitations.
  */
 inline fun <reified T> Module.read(source: LabelSource): T {
-    val t = Type(T::class, false, listOf())
+    val t = Type.from<T>()
     return resolve<T>(t).read(this, t, source)
 }
 
 /**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
+ * limitations.
  */
 inline fun <reified T> Module.write(sink: SeqSink, item: T) {
-    val t = Type(T::class, false, listOf())
+    val t = Type.from<T>()
     return resolve<T>(t).write(this, t, sink, item)
 }
 
 /**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
+ * limitations.
  */
 inline fun <reified T> Module.write(sink: LabelSink, item: T) {
-    val t = Type(T::class, false, listOf())
+    val t = Type.from<T>()
     return resolve<T>(t).write(this, t, sink, item)
 }
 

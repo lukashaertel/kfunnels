@@ -32,15 +32,10 @@ data class Container<T, U>(val t: T?, val u: U)
 
 fun main(args: Array<String>) {
 
-    val c1 = Container<Int?, String>(100, "Hello")
-    val c2 = Container<Int?, String>(null, "World")
+    val c = Container(100, "Hello")
 
-    val t = Type(Container::class, false, listOf(-Type.int, Type.string))
+    TestsModule.std.write(PrintLabelSink, c)
 
-    val f = TestsModule.std.resolve<Container<Int?, String>>(t)
-
-    f.write(TestsModule.std, t, PrintLabelSink, c1)
-    f.write(TestsModule.std, t, PrintLabelSink, c2)
 /*
     // Make data item
     val original = DataType(true, 23, 43, 124, 512313L, null, 2.0, 'a', Unit, "Hallo", listOf(1, 2, 3))
