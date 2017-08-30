@@ -3,6 +3,9 @@ package eu.metatools.kfunnels.base
 import eu.metatools.kfunnels.LabelSink
 import eu.metatools.kfunnels.SeqSink
 
+/**
+ * Pipes the calls into the standard output.
+ */
 object PrintSeqSink : SeqSink {
     override fun putBoolean(b: Boolean) {
         println("Boolean $b")
@@ -57,6 +60,9 @@ object PrintSeqSink : SeqSink {
     }
 }
 
+/**
+ * Pipes the calls into the standard output, prepends the values with labels.
+ */
 object PrintLabelSink : LabelSink {
     override fun putBoolean(label: String, b: Boolean) {
         println("Boolean $label=$b")
