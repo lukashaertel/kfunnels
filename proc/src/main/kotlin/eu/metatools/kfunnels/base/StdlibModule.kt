@@ -12,6 +12,7 @@ import eu.metatools.kfunnels.base.sets.MutableSetNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import java.util.*
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * The standard library types are resolved in this module. This includes primitives and list types.
@@ -51,6 +52,11 @@ object StdlibModule : Module {
             Type.primitiveString ->
                 return StringFunneler as Funneler<T>
         }
+
+        // Handle any enum type
+        @Suppress("unchecked_cast")
+        if (type.kClass.isSubclassOf(Enum::class))
+            return EnumFunneler as Funneler<T>
 
         // Handle generic list types
         @Suppress("unchecked_cast")

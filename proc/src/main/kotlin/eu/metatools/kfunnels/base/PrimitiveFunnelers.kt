@@ -1,6 +1,7 @@
 package eu.metatools.kfunnels.base
 
 import eu.metatools.kfunnels.*
+import eu.metatools.kfunnels.utils.RawEnums
 
 /**
  * The label if only one value is serialized into a labeled sink.
@@ -198,5 +199,24 @@ object StringFunneler : Funneler<String> {
 
     override fun write(module: Module, type: Type, sink: LabelSink, item: String) {
         sink.putString(singularValueLabel, item)
+    }
+}
+
+object EnumFunneler : Funneler<Enum<*>> {
+
+    override fun read(module: Module, type: Type, source: SeqSource) =
+            RawEnums.valueOf(type.kClass, source.getString()) as Enum<*>
+
+
+    override fun read(module: Module, type: Type, source: LabelSource): Enum<*> {
+        return RawEnums.valueOf(type.kClass, source.getString(singularValueLabel)) as Enum<*>
+    }
+
+    override fun write(module: Module, type: Type, sink: SeqSink, item: Enum<*>) {
+        sink.putString(item.name)
+    }
+
+    override fun write(module: Module, type: Type, sink: LabelSink, item: Enum<*>) {
+        sink.putString(singularValueLabel, item.name)
     }
 }

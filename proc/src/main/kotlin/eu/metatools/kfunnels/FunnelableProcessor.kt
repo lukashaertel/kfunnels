@@ -530,6 +530,35 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
             return arg.upperBoundList.map { computeDeclaration(it) }.singleOrNull() ?: "Any?"
         }
 
+        /**
+         * True if the type has not substitute, e.g. is final, an object or enum or enum constant.
+         */
+        fun isTypeLocked(type: ProtoBuf.Type): Boolean {
+            if (type.hasTypeParameter())
+                return false
+
+            return when (Flags.CLASS_KIND[type.flags]) {
+                ProtoBuf.Class.Kind.CLASS ->
+                    when (Flags.MODALITY[type.flags]) {
+                        null,
+                        ProtoBuf.Modality.ABSTRACT,
+                        ProtoBuf.Modality.OPEN,
+                        ProtoBuf.Modality.SEALED -> false
+
+                        ProtoBuf.Modality.FINAL -> true
+                    }
+
+                null,
+                ProtoBuf.Class.Kind.INTERFACE -> false
+
+                ProtoBuf.Class.Kind.ENUM_CLASS,
+                ProtoBuf.Class.Kind.ENUM_ENTRY,
+                ProtoBuf.Class.Kind.ANNOTATION_CLASS,
+                ProtoBuf.Class.Kind.OBJECT,
+                ProtoBuf.Class.Kind.COMPANION_OBJECT -> true
+            }
+        }
+
         fun funneler(type: ProtoBuf.Type) =
                 computeDeclaration(type).replace(Regex("\\W"), "_")
 

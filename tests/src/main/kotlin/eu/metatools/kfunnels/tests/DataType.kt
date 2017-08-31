@@ -3,24 +3,20 @@ package eu.metatools.kfunnels.tests
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.*
 
-interface Show {
-    fun show()
+enum class Color {
+    Red, Green, Blue
 }
 
 @Funnelable
-data class Thing(val i: Int, val j: Float) : Show {
-    override fun show() {
-        println("Hello, my int is $i, my float is $j")
-    }
-}
+data class Thing(val i: Int, val j: Float)
 
 @Funnelable
-data class Container<T : Show, U>(val t: T, val u: U)
+data class Container<T, U>(val t: T, val u: U, val c: Color)
 
 fun main(args: Array<String>) {
 
     // Make the container object.
-    val c = Container(Thing(10, 2.3f), listOf(1, 2, 3))
+    val c = Container(Thing(10, 2.3f), listOf(1, 2, 3), Color.Red)
     val s = JsonSink(System.out)
 
     // Write to sink
