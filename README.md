@@ -17,7 +17,7 @@ data class Thing(val i: Int, val j: Float)
 /**
  * Define an interface
  */
-interface Some { }
+interface Some {}
 
 /**
  * Define an instance of an interface.
