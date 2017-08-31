@@ -10,19 +10,19 @@ object NoFunneler : Funneler<Nothing> {
         error("There is no funneler for $type, check if annotations were processed.")
     }
 
-    override fun read(module: Module, type: Type, source: SeqSource): Nothing {
+    override fun read(module: Module, type: Type, source: Source): Nothing {
         error(type)
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): Nothing {
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): Nothing {
         error(type)
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Nothing) {
+    override fun write(module: Module, type: Type, sink: Sink, item: Nothing) {
         error(type)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Nothing) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Nothing) {
         error(type)
     }
 }

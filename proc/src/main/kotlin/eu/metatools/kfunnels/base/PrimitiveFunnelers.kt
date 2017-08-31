@@ -12,17 +12,17 @@ val singularValueLabel = "it"
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object BooleanFunneler : Funneler<Boolean> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getBoolean()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getBoolean(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Boolean) {
-        sink.putBoolean(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getBoolean(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Boolean) {
+        sink.putBoolean(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Boolean) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Boolean) {
         sink.putBoolean(singularValueLabel, item)
     }
 }
@@ -31,17 +31,17 @@ object BooleanFunneler : Funneler<Boolean> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object ByteFunneler : Funneler<Byte> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getByte()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getByte(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Byte) {
-        sink.putByte(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getByte(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Byte) {
+        sink.putByte(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Byte) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Byte) {
         sink.putByte(singularValueLabel, item)
     }
 }
@@ -51,17 +51,17 @@ object ByteFunneler : Funneler<Byte> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object ShortFunneler : Funneler<Short> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getShort()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getShort(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Short) {
-        sink.putShort(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getShort(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Short) {
+        sink.putShort(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Short) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Short) {
         sink.putShort(singularValueLabel, item)
     }
 }
@@ -70,17 +70,17 @@ object ShortFunneler : Funneler<Short> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object IntFunneler : Funneler<Int> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getInt()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getInt(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Int) {
-        sink.putInt(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getInt(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Int) {
+        sink.putInt(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Int) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Int) {
         sink.putInt(singularValueLabel, item)
     }
 }
@@ -90,17 +90,17 @@ object IntFunneler : Funneler<Int> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object LongFunneler : Funneler<Long> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getLong()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getLong(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Long) {
-        sink.putLong(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getLong(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Long) {
+        sink.putLong(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Long) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Long) {
         sink.putLong(singularValueLabel, item)
     }
 }
@@ -110,17 +110,17 @@ object LongFunneler : Funneler<Long> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object FloatFunneler : Funneler<Float> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getFloat()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getFloat(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Float) {
-        sink.putFloat(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getFloat(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Float) {
+        sink.putFloat(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Float) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Float) {
         sink.putFloat(singularValueLabel, item)
     }
 }
@@ -130,17 +130,17 @@ object FloatFunneler : Funneler<Float> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object DoubleFunneler : Funneler<Double> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getDouble()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getDouble(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Double) {
-        sink.putDouble(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getDouble(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Double) {
+        sink.putDouble(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Double) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Double) {
         sink.putDouble(singularValueLabel, item)
     }
 }
@@ -149,17 +149,17 @@ object DoubleFunneler : Funneler<Double> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object CharFunneler : Funneler<Char> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getChar()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getChar(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Char) {
-        sink.putChar(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getChar(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Char) {
+        sink.putChar(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Char) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Char) {
         sink.putChar(singularValueLabel, item)
     }
 }
@@ -168,17 +168,17 @@ object CharFunneler : Funneler<Char> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object UnitFunneler : Funneler<Unit> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getUnit()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getUnit(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Unit) {
-        sink.putUnit(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getUnit(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Unit) {
+        sink.putUnit(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Unit) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Unit) {
         sink.putUnit(singularValueLabel, item)
     }
 }
@@ -187,17 +187,17 @@ object UnitFunneler : Funneler<Unit> {
  * Funneler for primitive types. If a single value is written, [singularValueLabel] is used as a label.
  */
 object StringFunneler : Funneler<String> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            source.getString()
-
-    override fun read(module: Module, type: Type, source: LabelSource) =
+    override fun read(module: Module, type: Type, source: Source) =
             source.getString(singularValueLabel)
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: String) {
-        sink.putString(item)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource) =
+            source.getString(singularValueLabel)
+
+    override fun write(module: Module, type: Type, sink: Sink, item: String) {
+        sink.putString(singularValueLabel, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: String) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: String) {
         sink.putString(singularValueLabel, item)
     }
 }
@@ -207,19 +207,19 @@ object StringFunneler : Funneler<String> {
  * written, [singularValueLabel] is used as a label.
  */
 object EnumFunneler : Funneler<Enum<*>> {
-    override fun read(module: Module, type: Type, source: SeqSource) =
-            RawEnums.valueOf(type.kClass, source.getString()) as Enum<*>
+    override fun read(module: Module, type: Type, source: Source) =
+            RawEnums.valueOf(type.kClass, source.getString(singularValueLabel)) as Enum<*>
 
 
-    override fun read(module: Module, type: Type, source: LabelSource): Enum<*> {
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): Enum<*> {
         return RawEnums.valueOf(type.kClass, source.getString(singularValueLabel)) as Enum<*>
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Enum<*>) {
-        sink.putString(item.name)
+    override fun write(module: Module, type: Type, sink: Sink, item: Enum<*>) {
+        sink.putString(singularValueLabel, item.name)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Enum<*>) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Enum<*>) {
         sink.putString(singularValueLabel, item.name)
     }
 }

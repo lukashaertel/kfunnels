@@ -8,330 +8,293 @@ object ListNullableFunneler : Funneler<List<Any?>> {
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): List<Any?> = source.markAround(type) {
-
-        // Length is always needed
-        val length = source.getInt()
+    override fun read(module: Module, type: Type, source: Source): List<Any?>
+            = source.markAround(type) {
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                return (1..length).map { if (source.isNull()) null else source.getBoolean() }
+            Type.primitiveBoolean -> {
+                val r = ArrayList<Boolean?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableBoolean((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveByte ->
-                return (1..length).map { if (source.isNull()) null else source.getByte() }
+            Type.primitiveByte -> {
+                val r = ArrayList<Byte?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableByte((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveShort ->
-                return (1..length).map { if (source.isNull()) null else source.getShort() }
 
-            Type.primitiveInt ->
-                return (1..length).map { if (source.isNull()) null else source.getInt() }
+            Type.primitiveShort -> {
+                val r = ArrayList<Short?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableShort((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveLong ->
-                return (1..length).map { if (source.isNull()) null else source.getLong() }
+            Type.primitiveInt -> {
+                val r = ArrayList<Int?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableInt((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveFloat ->
-                return (1..length).map { if (source.isNull()) null else source.getFloat() }
+            Type.primitiveLong -> {
+                val r = ArrayList<Long?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableLong((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveDouble ->
-                return (1..length).map { if (source.isNull()) null else source.getDouble() }
+            Type.primitiveFloat -> {
+                val r = ArrayList<Float?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableFloat((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveChar ->
-                return (1..length).map { if (source.isNull()) null else source.getChar() }
+            Type.primitiveDouble -> {
+                val r = ArrayList<Double?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableDouble((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveUnit ->
-                return (1..length).map { if (source.isNull()) null else source.getUnit() }
+            Type.primitiveChar -> {
+                val r = ArrayList<Char?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableChar((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveString ->
-                return (1..length).map { if (source.isNull()) null else source.getString() }
+            Type.primitiveUnit -> {
+                val r = ArrayList<Unit?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableUnit((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveString -> {
+                val r = ArrayList<String?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableString((p++).toLabel())
+                return r
+            }
 
             else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
 
-                // Read as nested elements
-                return (1..length).map {
-                    if (source.isNull())
-                        null
-                    else {
-                        source.beginNested()
-                        val result = sub.read(module, type.arg, source)
-                        source.endNested()
-                        result
+                    val r = ArrayList<Any?>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        source.beginNested(p.toLabel(), type.arg)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
                     }
+                    return r
+                } else {
+                    val r = ArrayList<Any?>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        // Resolve element funneler for dynamic type
+                        val t = source.beginNested(p.toLabel(), type.arg)
+                        val sub = module.resolve<Any>(t)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
+                    }
+                    return r
                 }
             }
         }
-
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): List<Any?> = source.markAround(type) {
 
-        // Length is always needed
-        val length = source.getInt("length")
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): List<Any?>
+            = source.markAround(type) {
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getBoolean(it.toLabel()) }
+            Type.primitiveBoolean -> {
+                val r = ArrayList<Boolean?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableBoolean((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveByte ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getByte(it.toLabel()) }
+            Type.primitiveByte -> {
+                val r = ArrayList<Byte?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableByte((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveShort ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getShort(it.toLabel()) }
 
-            Type.primitiveInt ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getInt(it.toLabel()) }
+            Type.primitiveShort -> {
+                val r = ArrayList<Short?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableShort((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveLong ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getLong(it.toLabel()) }
+            Type.primitiveInt -> {
+                val r = ArrayList<Int?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableInt((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveFloat ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getFloat(it.toLabel()) }
+            Type.primitiveLong -> {
+                val r = ArrayList<Long?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableLong((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveDouble ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getDouble(it.toLabel()) }
+            Type.primitiveFloat -> {
+                val r = ArrayList<Float?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableFloat((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveChar ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getChar(it.toLabel()) }
+            Type.primitiveDouble -> {
+                val r = ArrayList<Double?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableDouble((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveUnit ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getUnit(it.toLabel()) }
+            Type.primitiveChar -> {
+                val r = ArrayList<Char?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableChar((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveString ->
-                return (1..length).map { if (source.isNull(it.toLabel())) null else source.getString(it.toLabel()) }
+            Type.primitiveUnit -> {
+                val r = ArrayList<Unit?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableUnit((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveString -> {
+                val r = ArrayList<String?>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getNullableString((p++).toLabel())
+                return r
+            }
 
             else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
 
-                // Read as nested elements
-                return (1..length).map {
-                    if (source.isNull(it.toLabel()))
-                        null
-                    else {
-                        source.beginNested(it.toLabel())
-                        val result = sub.read(module, type.arg, source)
-                        source.endNested(it.toLabel())
-                        result
+                    val r = ArrayList<Any?>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        if (source.isNull(p.toLabel())) {
+                            r.add(null)
+                            p++
+                        } else {
+                            source.beginNested(p.toLabel(), type.arg)
+                            r += sub.read(module, type.arg, source)
+                            source.endNested((p++).toLabel(), type.arg)
+                        }
                     }
+                    return r
+                } else {
+                    val r = ArrayList<Any?>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        if (source.isNull(p.toLabel())) {
+                            r.add(null)
+                            p++
+                        } else {
+                            // Resolve element funneler for dynamic type
+                            val t = source.beginNested(p.toLabel(), type.arg)
+                            val sub = module.resolve<Any>(t)
+                            r += sub.read(module, type.arg, source)
+                            source.endNested((p++).toLabel(), type.arg)
+                        }
+                    }
+                    return r
                 }
             }
         }
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: List<Any?>) = sink.markAround(type) {
-
-        sink.putInt(item.size)
-
-        @Suppress("unchecked_cast")
-        when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                for (it in item as List<Boolean?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putBoolean(it)
-                    }
-
-            Type.primitiveByte ->
-                for (it in item as List<Byte?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putByte(it)
-                    }
-
-            Type.primitiveShort ->
-                for (it in item as List<Short?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putShort(it)
-                    }
-
-            Type.primitiveInt ->
-                for (it in item as List<Int?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putInt(it)
-                    }
-
-            Type.primitiveLong ->
-                for (it in item as List<Long?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putLong(it)
-                    }
-
-            Type.primitiveFloat ->
-                for (it in item as List<Float?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putFloat(it)
-                    }
-
-            Type.primitiveDouble ->
-                for (it in item as List<Double?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putDouble(it)
-                    }
-
-            Type.primitiveChar ->
-                for (it in item as List<Char?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putChar(it)
-                    }
-
-            Type.primitiveUnit ->
-                for (it in item as List<Unit?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putUnit(it)
-                    }
-
-            Type.primitiveString ->
-                for (it in item as List<String?>)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.putString(it)
-                    }
-
-            else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
-
-                // Write nested
-                for (it in item)
-                    if (it == null)
-                        sink.putNull(true)
-                    else {
-                        sink.putNull(false)
-                        sink.beginNested()
-                        sub.write(module, type.arg, sink, it)
-                        sink.endNested()
-                    }
-            }
-        }
-    }
-
-    override fun write(module: Module, type: Type, sink: LabelSink, item: List<Any?>) = sink.markAround(type) {
-
-        sink.putInt("length", item.size)
+    override fun write(module: Module, type: Type, sink: Sink, item: List<Any?>)
+            = sink.markAround(type) {
 
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
             Type.primitiveBoolean ->
-                for ((i, it) in (item as List<Boolean?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putBoolean(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Boolean>).withIndex())
+                    sink.putNullableBoolean(i.toLabel(), it)
 
             Type.primitiveByte ->
-                for ((i, it) in (item as List<Byte?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putByte(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Byte>).withIndex())
+                    sink.putNullableByte(i.toLabel(), it)
 
             Type.primitiveShort ->
-                for ((i, it) in (item as List<Short?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putShort(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Short>).withIndex())
+                    sink.putNullableShort(i.toLabel(), it)
 
             Type.primitiveInt ->
-                for ((i, it) in (item as List<Int?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putInt(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Int>).withIndex())
+                    sink.putNullableInt(i.toLabel(), it)
 
             Type.primitiveLong ->
-                for ((i, it) in (item as List<Long?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putLong(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Long>).withIndex())
+                    sink.putNullableLong(i.toLabel(), it)
 
             Type.primitiveFloat ->
-                for ((i, it) in (item as List<Float?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putFloat(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Float>).withIndex())
+                    sink.putNullableFloat(i.toLabel(), it)
 
             Type.primitiveDouble ->
-                for ((i, it) in (item as List<Double?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putDouble(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Double>).withIndex())
+                    sink.putNullableDouble(i.toLabel(), it)
 
             Type.primitiveChar ->
-                for ((i, it) in (item as List<Char?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putChar(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Char>).withIndex())
+                    sink.putNullableChar(i.toLabel(), it)
 
             Type.primitiveUnit ->
-                for ((i, it) in (item as List<Unit?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putUnit(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<Unit>).withIndex())
+                    sink.putNullableUnit(i.toLabel(), it)
 
             Type.primitiveString ->
-                for ((i, it) in (item as List<String?>).withIndex())
-                    if (it == null)
-                        sink.putNull(i.toLabel(), true)
-                    else {
-                        sink.putNull(i.toLabel(), false)
-                        sink.putString(i.toLabel(), it)
-                    }
+                for ((i, it) in (item as List<String>).withIndex())
+                    sink.putNullableString(i.toLabel(), it)
 
             else -> {
                 // Resolve element funneler
@@ -343,12 +306,74 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                         sink.putNull(i.toLabel(), true)
                     else {
                         sink.putNull(i.toLabel(), false)
-                        sink.beginNested(i.toLabel())
+                        sink.beginNested(i.toLabel(), type.arg, it)
                         sub.write(module, type.arg, sink, it)
-                        sink.endNested(i.toLabel())
+                        sink.endNested(i.toLabel(), type.arg, it)
                     }
             }
         }
     }
 
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: List<Any?>)
+            = sink.markAround(type) {
+
+        @Suppress("unchecked_cast")
+        when (type.arg.primitiveCode) {
+            Type.primitiveBoolean ->
+                for ((i, it) in (item as List<Boolean>).withIndex())
+                    sink.putNullableBoolean(i.toLabel(), it)
+
+            Type.primitiveByte ->
+                for ((i, it) in (item as List<Byte>).withIndex())
+                    sink.putNullableByte(i.toLabel(), it)
+
+            Type.primitiveShort ->
+                for ((i, it) in (item as List<Short>).withIndex())
+                    sink.putNullableShort(i.toLabel(), it)
+
+            Type.primitiveInt ->
+                for ((i, it) in (item as List<Int>).withIndex())
+                    sink.putNullableInt(i.toLabel(), it)
+
+            Type.primitiveLong ->
+                for ((i, it) in (item as List<Long>).withIndex())
+                    sink.putNullableLong(i.toLabel(), it)
+
+            Type.primitiveFloat ->
+                for ((i, it) in (item as List<Float>).withIndex())
+                    sink.putNullableFloat(i.toLabel(), it)
+
+            Type.primitiveDouble ->
+                for ((i, it) in (item as List<Double>).withIndex())
+                    sink.putNullableDouble(i.toLabel(), it)
+
+            Type.primitiveChar ->
+                for ((i, it) in (item as List<Char>).withIndex())
+                    sink.putNullableChar(i.toLabel(), it)
+
+            Type.primitiveUnit ->
+                for ((i, it) in (item as List<Unit>).withIndex())
+                    sink.putNullableUnit(i.toLabel(), it)
+
+            Type.primitiveString ->
+                for ((i, it) in (item as List<String>).withIndex())
+                    sink.putNullableString(i.toLabel(), it)
+
+            else -> {
+                // Resolve element funneler
+                val sub = module.resolve<Any>(type.arg)
+
+                // Write nested
+                for ((i, it) in item.withIndex())
+                    if (it == null)
+                        sink.putNull(i.toLabel(), true)
+                    else {
+                        sink.putNull(i.toLabel(), false)
+                        sink.beginNested(i.toLabel(), type.arg, it)
+                        sub.write(module, type.arg, sink, it)
+                        sink.endNested(i.toLabel(), type.arg, it)
+                    }
+            }
+        }
+    }
 }

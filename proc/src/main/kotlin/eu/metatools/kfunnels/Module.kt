@@ -68,7 +68,7 @@ infix fun Module.then(nextModule: Module) = object : Module {
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
  * limitations.
  */
-inline fun <reified T> Module.read(source: SeqSource): T {
+inline fun <reified T> Module.read(source: Source): T {
     val t = Type.from<T>()
     return resolve<T>(t).read(this, t, source)
 }
@@ -77,7 +77,7 @@ inline fun <reified T> Module.read(source: SeqSource): T {
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
  * limitations.
  */
-inline fun <reified T> Module.read(source: LabelSource): T {
+suspend inline fun <reified T> Module.read(source: SuspendSource): T {
     val t = Type.from<T>()
     return resolve<T>(t).read(this, t, source)
 }
@@ -86,7 +86,7 @@ inline fun <reified T> Module.read(source: LabelSource): T {
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
  * limitations.
  */
-inline fun <reified T> Module.write(sink: SeqSink, item: T) {
+inline fun <reified T> Module.write(sink: Sink, item: T) {
     val t = Type.from<T>()
     return resolve<T>(t).write(this, t, sink, item)
 }
@@ -95,7 +95,7 @@ inline fun <reified T> Module.write(sink: SeqSink, item: T) {
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
  * limitations.
  */
-inline fun <reified T> Module.write(sink: LabelSink, item: T) {
+suspend inline fun <reified T> Module.write(sink: SuspendSink, item: T) {
     val t = Type.from<T>()
     return resolve<T>(t).write(this, t, sink, item)
 }
@@ -105,7 +105,7 @@ inline fun <reified T> Module.write(sink: LabelSink, item: T) {
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
  * limitations. Applies a configurator function to the inferred type.
  */
-inline fun <reified T> Module.read(source: SeqSource, configureType: (Type) -> Type): T {
+inline fun <reified T> Module.read(source: Source, configureType: (Type) -> Type): T {
     val t = configureType(Type.from<T>())
     return resolve<T>(t).read(this, t, source)
 }
@@ -114,7 +114,7 @@ inline fun <reified T> Module.read(source: SeqSource, configureType: (Type) -> T
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
  * limitations. Applies a configurator function to the inferred type.
  */
-inline fun <reified T> Module.read(source: LabelSource, configureType: (Type) -> Type): T {
+suspend inline fun <reified T> Module.read(source: SuspendSource, configureType: (Type) -> Type): T {
     val t = configureType(Type.from<T>())
     return resolve<T>(t).read(this, t, source)
 }
@@ -123,7 +123,7 @@ inline fun <reified T> Module.read(source: LabelSource, configureType: (Type) ->
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
  * limitations. Applies a configurator function to the inferred type.
  */
-inline fun <reified T> Module.write(sink: SeqSink, item: T, configureType: (Type) -> Type) {
+inline fun <reified T> Module.write(sink: Sink, item: T, configureType: (Type) -> Type) {
     val t = configureType(Type.from<T>())
     return resolve<T>(t).write(this, t, sink, item)
 }
@@ -132,7 +132,7 @@ inline fun <reified T> Module.write(sink: SeqSink, item: T, configureType: (Type
  * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
  * limitations. Applies a configurator function to the inferred type.
  */
-inline fun <reified T> Module.write(sink: LabelSink, item: T, configureType: (Type) -> Type) {
+suspend inline fun <reified T> Module.write(sink: SuspendSink, item: T, configureType: (Type) -> Type) {
     val t = configureType(Type.from<T>())
     return resolve<T>(t).write(this, t, sink, item)
 }

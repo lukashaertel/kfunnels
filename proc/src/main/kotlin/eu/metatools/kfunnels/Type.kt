@@ -257,4 +257,46 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
      * Returns true if this type is primitive.
      */
     fun isPrimitive() = primitiveCode != null
+
+    /**
+     * Returns true if the type can not be substituted by another type.
+     */
+    fun isTerminal() =
+            !(kClass.isAbstract || kClass.isOpen || kClass.isSealed)
+
+    private fun isDefaultInclude(): Boolean =
+            kClass.qualifiedName?.let {
+                when (it.substringBeforeLast('.')) {
+                    "kotlin",
+                    "kotlin.collections" -> true
+                    else -> false
+                }
+            } ?: false
+
+
+    override fun toString() =
+            buildString {
+                // Append name, simplify if possible
+                if (isDefaultInclude())
+                    append(kClass.simpleName)
+                else
+                    append(kClass.qualifiedName)
+
+                // Append arguments
+                if (args.isNotEmpty()) {
+                    append('<')
+                    var sep = false
+                    for (arg in args) {
+                        if (sep)
+                            append(", ")
+                        append(arg)
+                        sep = true
+                    }
+                    append('>')
+                }
+
+                // Append nullable suffix
+                if (nullable)
+                    append('?')
+            }
 }

@@ -8,174 +8,241 @@ object SetFunneler : Funneler<Set<Any>> {
      */
     private fun Int.toLabel() = "item$this"
 
-    override fun read(module: Module, type: Type, source: SeqSource): Set<Any> = source.markAround(type) {
-        // Length is always needed
-        val length = source.getInt()
+    override fun read(module: Module, type: Type, source: Source): Set<Any>
+            = source.markAround(type) {
 
         // Try to find a faster resolution for primitive types
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                return (1..length).map { source.getBoolean() }.toSet()
-
-            Type.primitiveByte ->
-                return (1..length).map { source.getByte() }.toSet()
-
-            Type.primitiveShort ->
-                return (1..length).map { source.getShort() }.toSet()
-
-            Type.primitiveInt ->
-                return (1..length).map { source.getInt() }.toSet()
-
-            Type.primitiveLong ->
-                return (1..length).map { source.getLong() }.toSet()
-
-            Type.primitiveFloat ->
-                return (1..length).map { source.getFloat() }.toSet()
-
-            Type.primitiveDouble ->
-                return (1..length).map { source.getDouble() }.toSet()
-
-            Type.primitiveChar ->
-                return (1..length).map { source.getChar() }.toSet()
-
-            Type.primitiveUnit ->
-                return (1..length).map { source.getUnit() }.toSet()
-
-            Type.primitiveString ->
-                return (1..length).map { source.getString() }.toSet()
-
-            else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
-
-                // Read as nested elements
-                return (1..length).map {
-                    source.beginNested()
-                    val result = sub.read(module, type.arg, source)
-                    source.endNested()
-                    result
-                }.toSet()
+            Type.primitiveBoolean -> {
+                val r = HashSet<Boolean>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getBoolean((p++).toLabel())
+                return r
             }
-        }
 
-    }
-
-    override fun read(module: Module, type: Type, source: LabelSource): Set<Any> = source.markAround(type) {
-        // Length is always needed
-        val length = source.getInt("length")
-
-        // Try to find a faster resolution for primitive types
-        @Suppress("unchecked_cast")
-        when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                return (1..length).map { source.getBoolean(it.toLabel()) }.toSet()
-
-            Type.primitiveByte ->
-                return (1..length).map { source.getByte(it.toLabel()) }.toSet()
-
-            Type.primitiveShort ->
-                return (1..length).map { source.getShort(it.toLabel()) }.toSet()
-
-            Type.primitiveInt ->
-                return (1..length).map { source.getInt(it.toLabel()) }.toSet()
-
-            Type.primitiveLong ->
-                return (1..length).map { source.getLong(it.toLabel()) }.toSet()
-
-            Type.primitiveFloat ->
-                return (1..length).map { source.getFloat(it.toLabel()) }.toSet()
-
-            Type.primitiveDouble ->
-                return (1..length).map { source.getDouble(it.toLabel()) }.toSet()
-
-            Type.primitiveChar ->
-                return (1..length).map { source.getChar(it.toLabel()) }.toSet()
-
-            Type.primitiveUnit ->
-                return (1..length).map { source.getUnit(it.toLabel()) }.toSet()
-
-            Type.primitiveString ->
-                return (1..length).map { source.getString(it.toLabel()) }.toSet()
-
-            else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
-
-                // Read as nested elements
-                return (1..length).map {
-                    source.beginNested(it.toLabel())
-                    val result = sub.read(module, type.arg, source)
-                    source.endNested(it.toLabel())
-                    result
-                }.toSet()
+            Type.primitiveByte -> {
+                val r = HashSet<Byte>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getByte((p++).toLabel())
+                return r
             }
-        }
-    }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: Set<Any>) = sink.markAround(type) {
 
-        sink.putInt(item.size)
+            Type.primitiveShort -> {
+                val r = HashSet<Short>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getShort((p++).toLabel())
+                return r
+            }
 
-        @Suppress("unchecked_cast")
-        when (type.arg.primitiveCode) {
-            Type.primitiveBoolean ->
-                for (it in item as Set<Boolean>)
-                    sink.putBoolean(it)
+            Type.primitiveInt -> {
+                val r = HashSet<Int>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getInt((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveByte ->
-                for (it in item as Set<Byte>)
-                    sink.putByte(it)
+            Type.primitiveLong -> {
+                val r = HashSet<Long>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getLong((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveShort ->
-                for (it in item as Set<Short>)
-                    sink.putShort(it)
+            Type.primitiveFloat -> {
+                val r = HashSet<Float>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getFloat((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveInt ->
-                for (it in item as Set<Int>)
-                    sink.putInt(it)
+            Type.primitiveDouble -> {
+                val r = HashSet<Double>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getDouble((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveLong ->
-                for (it in item as Set<Long>)
-                    sink.putLong(it)
+            Type.primitiveChar -> {
+                val r = HashSet<Char>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getChar((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveFloat ->
-                for (it in item as Set<Float>)
-                    sink.putFloat(it)
+            Type.primitiveUnit -> {
+                val r = HashSet<Unit>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getUnit((p++).toLabel())
+                return r
+            }
 
-            Type.primitiveDouble ->
-                for (it in item as Set<Double>)
-                    sink.putDouble(it)
-
-            Type.primitiveChar ->
-                for (it in item as Set<Char>)
-                    sink.putChar(it)
-
-            Type.primitiveUnit ->
-                for (it in item as Set<Unit>)
-                    sink.putUnit(it)
-
-            Type.primitiveString ->
-                for (it in item as Set<String>)
-                    sink.putString(it)
+            Type.primitiveString -> {
+                val r = HashSet<String>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getString((p++).toLabel())
+                return r
+            }
 
             else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
 
-                // Write nested
-                for (it in item) {
-                    sink.beginNested()
-                    sub.write(module, type.arg, sink, it)
-                    sink.endNested()
+                    val r = HashSet<Any>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        source.beginNested(p.toLabel(), type.arg)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
+                    }
+                    return r
+                } else {
+                    val r = HashSet<Any>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        // Resolve element funneler for dynamic type
+                        val t = source.beginNested(p.toLabel(), type.arg)
+                        val sub = module.resolve<Any>(t)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
+                    }
+                    return r
                 }
             }
         }
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: Set<Any>) = sink.markAround(type) {
 
-        sink.putInt("length", item.size)
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): Set<Any>
+            = source.markAround(type) {
+
+        // Try to find a faster resolution for primitive types
+        @Suppress("unchecked_cast")
+        when (type.arg.primitiveCode) {
+            Type.primitiveBoolean -> {
+                val r = HashSet<Boolean>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getBoolean((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveByte -> {
+                val r = HashSet<Byte>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getByte((p++).toLabel())
+                return r
+            }
+
+
+            Type.primitiveShort -> {
+                val r = HashSet<Short>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getShort((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveInt -> {
+                val r = HashSet<Int>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getInt((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveLong -> {
+                val r = HashSet<Long>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getLong((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveFloat -> {
+                val r = HashSet<Float>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getFloat((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveDouble -> {
+                val r = HashSet<Double>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getDouble((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveChar -> {
+                val r = HashSet<Char>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getChar((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveUnit -> {
+                val r = HashSet<Unit>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getUnit((p++).toLabel())
+                return r
+            }
+
+            Type.primitiveString -> {
+                val r = HashSet<String>()
+                var p = 0
+                while (!source.isEnd())
+                    r += source.getString((p++).toLabel())
+                return r
+            }
+
+            else -> {
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
+
+                    val r = HashSet<Any>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        source.beginNested(p.toLabel(), type.arg)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
+                    }
+                    return r
+                } else {
+                    val r = HashSet<Any>()
+                    var p = 0
+                    while (!source.isEnd()) {
+                        // Resolve element funneler for dynamic type
+                        val t = source.beginNested(p.toLabel(), type.arg)
+                        val sub = module.resolve<Any>(t)
+                        r += sub.read(module, type.arg, source)
+                        source.endNested((p++).toLabel(), type.arg)
+                    }
+                    return r
+                }
+            }
+        }
+    }
+
+    override fun write(module: Module, type: Type, sink: Sink, item: Set<Any>)
+            = sink.markAround(type) {
 
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
@@ -225,12 +292,70 @@ object SetFunneler : Funneler<Set<Any>> {
 
                 // Write nested
                 for ((i, it) in item.withIndex()) {
-                    sink.beginNested(i.toLabel())
+                    sink.beginNested(i.toLabel(), type.arg, it)
                     sub.write(module, type.arg, sink, it)
-                    sink.endNested(i.toLabel())
+                    sink.endNested(i.toLabel(), type.arg, it)
                 }
             }
         }
     }
 
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Set<Any>)
+            = sink.markAround(type) {
+
+        @Suppress("unchecked_cast")
+        when (type.arg.primitiveCode) {
+            Type.primitiveBoolean ->
+                for ((i, it) in (item as Set<Boolean>).withIndex())
+                    sink.putBoolean(i.toLabel(), it)
+
+            Type.primitiveByte ->
+                for ((i, it) in (item as Set<Byte>).withIndex())
+                    sink.putByte(i.toLabel(), it)
+
+            Type.primitiveShort ->
+                for ((i, it) in (item as Set<Short>).withIndex())
+                    sink.putShort(i.toLabel(), it)
+
+            Type.primitiveInt ->
+                for ((i, it) in (item as Set<Int>).withIndex())
+                    sink.putInt(i.toLabel(), it)
+
+            Type.primitiveLong ->
+                for ((i, it) in (item as Set<Long>).withIndex())
+                    sink.putLong(i.toLabel(), it)
+
+            Type.primitiveFloat ->
+                for ((i, it) in (item as Set<Float>).withIndex())
+                    sink.putFloat(i.toLabel(), it)
+
+            Type.primitiveDouble ->
+                for ((i, it) in (item as Set<Double>).withIndex())
+                    sink.putDouble(i.toLabel(), it)
+
+            Type.primitiveChar ->
+                for ((i, it) in (item as Set<Char>).withIndex())
+                    sink.putChar(i.toLabel(), it)
+
+            Type.primitiveUnit ->
+                for ((i, it) in (item as Set<Unit>).withIndex())
+                    sink.putUnit(i.toLabel(), it)
+
+            Type.primitiveString ->
+                for ((i, it) in (item as Set<String>).withIndex())
+                    sink.putString(i.toLabel(), it)
+
+            else -> {
+                // Resolve element funneler
+                val sub = module.resolve<Any>(type.arg)
+
+                // Write nested
+                for ((i, it) in item.withIndex()) {
+                    sink.beginNested(i.toLabel(), type.arg, it)
+                    sub.write(module, type.arg, sink, it)
+                    sink.endNested(i.toLabel(), type.arg, it)
+                }
+            }
+        }
+    }
 }

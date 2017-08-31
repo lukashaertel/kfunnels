@@ -4,11 +4,6 @@ import eu.metatools.kfunnels.Funneler
 import eu.metatools.kfunnels.Module
 import eu.metatools.kfunnels.Type
 import eu.metatools.kfunnels.base.lists.ListFunneler
-import eu.metatools.kfunnels.base.lists.ListNullableFunneler
-import eu.metatools.kfunnels.base.lists.MutableListFunneler
-import eu.metatools.kfunnels.base.lists.MutableListNullableFunneler
-import eu.metatools.kfunnels.base.sets.MutableSetFunneler
-import eu.metatools.kfunnels.base.sets.MutableSetNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import java.util.*
@@ -61,27 +56,13 @@ object StdlibModule : Module {
         // Handle generic list types
         @Suppress("unchecked_cast")
         when (type.kClass) {
-        // Array list, also default implementation of mutable list and mutable collection
             MutableCollection::class,
             MutableList::class,
-            ArrayList::class ->
-                if (type.arg.nullable)
-                    return MutableListNullableFunneler(::ArrayList) as Funneler<T>
-                else
-                    return MutableListFunneler(::ArrayList) as Funneler<T>
-
-        // Linked list
-            LinkedList::class ->
-                if (type.arg.nullable)
-                    return MutableListNullableFunneler(::LinkedList) as Funneler<T>
-                else
-                    return MutableListFunneler(::LinkedList) as Funneler<T>
-
-        // Immutable list, also default for immutable collection
+            ArrayList::class,
             Collection::class,
             List::class ->
                 if (type.arg.nullable)
-                    return ListNullableFunneler as Funneler<T>
+                    return SetNullableFunneler as Funneler<T>
                 else
                     return ListFunneler as Funneler<T>
         }
@@ -90,22 +71,9 @@ object StdlibModule : Module {
         // Handle generic set types
         @Suppress("unchecked_cast")
         when (type.kClass) {
-        // Hash set, also default implementation of mutable set
-            MutableSet::class,
-            HashSet::class ->
-                if (type.arg.nullable)
-                    return MutableSetNullableFunneler(::HashSet) as Funneler<T>
-                else
-                    return MutableSetFunneler(::HashSet) as Funneler<T>
-
-        // Tree set
-            TreeSet::class ->
-                if (type.arg.nullable)
-                    return MutableSetNullableFunneler(::TreeSet) as Funneler<T>
-                else
-                    return MutableSetFunneler(::TreeSet) as Funneler<T>
-
         // Immutable set
+            MutableSet::class,
+            HashSet::class,
             Set::class ->
                 if (type.arg.nullable)
                     return SetNullableFunneler as Funneler<T>

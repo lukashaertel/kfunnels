@@ -9,49 +9,49 @@ import eu.metatools.kfunnels.*
 /**
  * Wraps nullable funneling, uses [itName] when a labeled source or sink is used.
  */
-class NullableFunneler<T>(val of: Funneler<T>, val itName: String = "it") : Funneler<T?> {
-    override fun read(module: Module, type: Type, source: SeqSource): T? = source.markAround(type) {
-        if (source.isNull())
+class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
+    override fun read(module: Module, type: Type, source: Source): T? = source.markAround(type) {
+        if (source.isNull(singularValueLabel))
             return null
 
-        source.beginNested()
-        val r = of.read(module, +type, source)
-        source.endNested()
+        val t = source.beginNested(singularValueLabel, type)
+        val r = of.read(module, +t, source)
+        source.endNested(singularValueLabel, type)
         return r
     }
 
-    override fun read(module: Module, type: Type, source: LabelSource): T? = source.markAround(type) {
-        if (source.isNull(itName))
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): T? = source.markAround(type) {
+        if (source.isNull(singularValueLabel))
             return null
 
-        source.beginNested(itName)
-        val r = of.read(module, +type, source)
-        source.endNested(itName)
+        val t = source.beginNested(singularValueLabel, type)
+        val r = of.read(module, +t, source)
+        source.endNested(singularValueLabel, type)
         return r
     }
 
-    override fun write(module: Module, type: Type, sink: SeqSink, item: T?) = sink.markAround(type) {
+    override fun write(module: Module, type: Type, sink: Sink, item: T?) = sink.markAround(type) {
         if (item == null) {
-            sink.putNull(true)
+            sink.putNull(singularValueLabel, true)
             return
         }
 
-        sink.putNull(false)
-        sink.beginNested()
-        of.write(module, +type, sink, item)
-        sink.endNested()
+        sink.putNull(singularValueLabel, false)
+        sink.beginNested(singularValueLabel, type, item)
+        of.write(module, type, sink, item)
+        sink.endNested(singularValueLabel, type, item)
     }
 
-    override fun write(module: Module, type: Type, sink: LabelSink, item: T?) = sink.markAround(type) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: T?) = sink.markAround(type) {
         if (item == null) {
-            sink.putNull(itName, true)
+            sink.putNull(singularValueLabel, true)
             return
         }
 
-        sink.putNull(itName, false)
-        sink.beginNested(itName)
-        of.write(module, +type, sink, item)
-        sink.endNested(itName)
+        sink.putNull(singularValueLabel, false)
+        sink.beginNested(singularValueLabel, type, item)
+        of.write(module, type, sink, item)
+        sink.endNested(singularValueLabel, type, item)
     }
 
 }
