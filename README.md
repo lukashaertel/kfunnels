@@ -1,4 +1,5 @@
-# kfunnels
+![kfunnels](https://raw.githubusercontent.com/lukashaertel/kfunnels/resource/kfunnels_logo_small.png) **kfunnels**
+
 
 Generates serialization and unserialization for kotlin classes via annotation processing.
 
