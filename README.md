@@ -1,6 +1,6 @@
 ![kfunnels](https://raw.githubusercontent.com/lukashaertel/kfunnels/resource/kfunnels_logo_small_text.png)
 
-Generates serialization and unserialization for kotlin classes via annotation processing.
+Generates serialization and unserialization for Kotlin classes via annotation processing.
 
 
 ## Define the data
