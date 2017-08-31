@@ -202,8 +202,11 @@ object StringFunneler : Funneler<String> {
     }
 }
 
+/**
+ * Funneler for enum type. Uses Java valueOf to determine the value of an enum stored in a strng.  If a single value is
+ * written, [singularValueLabel] is used as a label.
+ */
 object EnumFunneler : Funneler<Enum<*>> {
-
     override fun read(module: Module, type: Type, source: SeqSource) =
             RawEnums.valueOf(type.kClass, source.getString()) as Enum<*>
 
