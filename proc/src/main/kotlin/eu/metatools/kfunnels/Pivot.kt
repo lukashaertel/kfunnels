@@ -1,216 +1,5 @@
 package eu.metatools.kfunnels
 
-import eu.metatools.kfunnels.base.NoFunneler
-import eu.metatools.kfunnels.base.NullableFunneler
-import eu.metatools.kfunnels.base.StdlibModule
-import kotlin.reflect.KClass
-
-/**
- * A module provides resolution of funneler from class.
- */
-interface Module {
-    /**
-     * Resolves the funneler for the given type.
-     */
-    fun <T> resolve(type: Type): Funneler<T>
-}
-
-
-/**
- * Interface implemented by generated modules.
- */
-interface GeneratedModule : Module {
-    /**
-     * List of supported types.
-     */
-    val types: List<GeneratedFunneler<*>>
-}
-
-/**
- * Module provider for the service registry.
- */
-interface ModuleProvider {
-    fun provide(): Module
-}
-
-/**
- * Returns a composite module of this module and the [StdlibModule]. This should normally be used to support primitives.
- */
-val Module.std get() = this then StdlibModule
-
-/**
- * Adds support for first level nullable inputs to [Module.resolve]. Nested nullable values are ususally handled within
- * the responsible funneler itself. If the first call is to a nullable type, this method should be used.
- */
-fun Module.withNullableSupport() = object : Module {
-    override fun <T> resolve(type: Type): Funneler<T> {
-        // Catch nullable types
-        if (type.nullable)
-            @Suppress("unchecked_cast")
-            return NullableFunneler<T>(this@withNullableSupport.resolve(type)) as Funneler<T>
-
-        // Otherwise use base
-        return this@withNullableSupport.resolve(type)
-    }
-}
-
-infix fun Module.then(nextModule: Module) = object : Module {
-    override fun <T> resolve(type: Type): Funneler<T> {
-        val p = this@then.resolve<T>(type)
-        if (p == NoFunneler)
-            return nextModule.resolve(type)
-        else
-            return p
-    }
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
- * limitations.
- */
-inline fun <reified T> Module.read(source: SeqSource): T {
-    val t = Type.from<T>()
-    return resolve<T>(t).read(this, t, source)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
- * limitations.
- */
-inline fun <reified T> Module.read(source: LabelSource): T {
-    val t = Type.from<T>()
-    return resolve<T>(t).read(this, t, source)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
- * limitations.
- */
-inline fun <reified T> Module.write(sink: SeqSink, item: T) {
-    val t = Type.from<T>()
-    return resolve<T>(t).write(this, t, sink, item)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
- * limitations.
- */
-inline fun <reified T> Module.write(sink: LabelSink, item: T) {
-    val t = Type.from<T>()
-    return resolve<T>(t).write(this, t, sink, item)
-}
-
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
- * limitations. Applies a configurator function to the inferred type.
- */
-inline fun <reified T> Module.read(source: SeqSource, configureType: (Type) -> Type): T {
-    val t = configureType(Type.from<T>())
-    return resolve<T>(t).read(this, t, source)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
- * limitations. Applies a configurator function to the inferred type.
- */
-inline fun <reified T> Module.read(source: LabelSource, configureType: (Type) -> Type): T {
-    val t = configureType(Type.from<T>())
-    return resolve<T>(t).read(this, t, source)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
- * limitations. Applies a configurator function to the inferred type.
- */
-inline fun <reified T> Module.write(sink: SeqSink, item: T, configureType: (Type) -> Type) {
-    val t = configureType(Type.from<T>())
-    return resolve<T>(t).write(this, t, sink, item)
-}
-
-/**
- * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink. See [Type.from] for
- * limitations. Applies a configurator function to the inferred type.
- */
-inline fun <reified T> Module.write(sink: LabelSink, item: T, configureType: (Type) -> Type) {
-    val t = configureType(Type.from<T>())
-    return resolve<T>(t).write(this, t, sink, item)
-}
-
-
-/**
- * Funnels and unfunnels elements of type [T] into and out of sequence and label sinks.
- */
-interface Funneler<T> {
-    /**
-     * Uses the given module to read the item from the sequence source.
-     * @param module The module used to resolve nested funnelers
-     * @param type The actual type that the funneler is to read
-     * @param source The source to read from
-     */
-    fun read(module: Module, type: Type, source: SeqSource): T
-
-    /**
-     * Uses the given module to read the item from the label source.
-     * @param module The module used to resolve nested funnelers
-     * @param type The actual type that the funneler is to read
-     * @param source The source to read from
-     */
-    fun read(module: Module, type: Type, source: LabelSource): T
-
-    /**
-     * Uses the given module to write the item to the sequence sink.
-     * @param module The module used to resolve nested funnelers
-     * @param type The actual type that the funneler is to read
-     * @param sink The sink to write to
-     * @param item The item to write
-     */
-    fun write(module: Module, type: Type, sink: SeqSink, item: T)
-
-    /**
-     * Uses the given module to write the item to the label sink.
-     * @param module The module used to resolve nested funnelers
-     * @param type The actual type that the funneler is to read
-     * @param sink The sink to write to
-     * @param item The item to write
-     */
-    fun write(module: Module, type: Type, sink: LabelSink, item: T)
-}
-
-/**
- * Interface implemented by funnelers generated for classes.
- */
-interface GeneratedFunneler<T : Any> : Funneler<T> {
-    /**
-     * Gets the module in which the funneler is registered.
-     */
-    val module: Module
-
-    /**
-     * Gets the raw type that the funneler serves.
-     */
-    val type: KClass<T>
-}
-
-/**
- * Reads from the source but only if not marked null.
- */
-fun <T> SeqSource.readIfNotNull(block: () -> T): T? {
-    if (isNull())
-        return null
-    else
-        return block()
-}
-
-/**
- * Reads from the source but only if not marked null.
- */
-fun <T> LabelSource.readIfNotNull(label: String, block: () -> T): T? {
-    if (isNull(label))
-        return null
-    else
-        return block()
-}
 
 /**
  * Base interface for sources and sinks.
@@ -561,4 +350,25 @@ inline fun <T> Pivot.markAround(type: Type, block: () -> T): T {
     val r = block()
     markEnd(type)
     return r
+}
+
+
+/**
+ * Reads from the source but only if not marked null.
+ */
+fun <T> SeqSource.readIfNotNull(block: () -> T): T? {
+    if (isNull())
+        return null
+    else
+        return block()
+}
+
+/**
+ * Reads from the source but only if not marked null.
+ */
+fun <T> LabelSource.readIfNotNull(label: String, block: () -> T): T? {
+    if (isNull(label))
+        return null
+    else
+        return block()
 }
