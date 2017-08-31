@@ -5,7 +5,7 @@ Generates serialization and unserialization for kotlin classes via annotation pr
 
 ## Define the data
 
-*kfunnels* supports primitives, enums, some collection types, variables that are themselves `@Funnelable`, interfaces that are -- in the instance -- funnelable.
+*kfunnels* supports primitives, enums, some collection types, variables that are themselves `@Funnelable`, interfaces that are at runtime funnelable.
 
 ```kotlin
 /**
