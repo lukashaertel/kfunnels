@@ -42,6 +42,12 @@ data class Another(val i: Thing, val s: Some)
  */
 @Funnelable
 data class Container(val items: List<Some?>)
+
+/**
+ * A type that has a generic argument.
+ */
+@Funnelable
+data class Generic<T>(val item: T)
 ```
 
 # Use
@@ -100,8 +106,30 @@ fun main(args: Array<String>) {
     // Read the clone form the list
     val cloneContainer = ServiceModule.std.read<Container>(ListSource(listContainer))
 
-    // Print hte clone
+    // Print the clone
     println(cloneContainer)
+
+
+    // Make a class that uses generics
+    val generic = Generic(100)
+
+    // Print that original item
+    println(generic)
+
+    // Sequence into list
+    val listGeneric = ListSink().let {
+        ServiceModule.std.write(it, generic)
+        it.reset()
+    }
+
+    // Print the output list
+    println(listGeneric)
+
+    // Read the clone form the list
+    val cloneGeneric = ServiceModule.std.read<Generic<Int>>(ListSource(listGeneric))
+
+    // Print the clone
+    println(cloneGeneric)
 }
 ```
 

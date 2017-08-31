@@ -740,7 +740,10 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                                 val name = environment.nameResolver.getString(p.name)
                                 val type = mapper.computeType(p.type, true)
                                 val getter = mapper.getter(p.type)
-                                val declaration = mapper.computeDeclaration(p.type, true)
+                                val declaration = if (p.type.hasTypeParameter())
+                                    mapper.computeBound(p.type)
+                                else
+                                    mapper.computeDeclaration(p.type, true)
 
                                 // Write the nested reading fragment
                                 writeTrimmed("""
@@ -787,7 +790,10 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             val name = environment.nameResolver.getString(p.name)
                             val type = mapper.computeType(p.returnType, true)
                             val getter = mapper.getter(p.returnType)
-                            val declaration = mapper.computeDeclaration(p.returnType, true)
+                            val declaration = if (p.returnType.hasTypeParameter())
+                                mapper.computeBound(p.returnType)
+                            else
+                                mapper.computeDeclaration(p.returnType, true)
 
                             // Write the nested reading fragment
                             writeTrimmed("""
