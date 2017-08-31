@@ -17,7 +17,7 @@ data class Thing(val i: Int, val j: Float)
 /**
  * Define an interface
  */
-interface Some
+interface Some { }
 
 /**
  * Define an instance of an interface.
@@ -61,6 +61,7 @@ fun main(args: Array<String>) {
 
     // Sequence both elements to a list
     val listLeft = ListSink().let {
+        // Use the service registry, the .std suffix registers primtive types
         ServiceModule.std.write(it, itemLeft)
         it.reset()
     }
