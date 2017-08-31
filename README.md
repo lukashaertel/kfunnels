@@ -5,35 +5,43 @@ Generates serialization and unserialization for kotlin classes via annotation pr
 
 ## Define the data
 
-Primitive, collection types, and @Funnelable types are supported.
+*kfunnels* supports primitives, enums, some collection types, variables that are themselves `@Funnelable`, interfaces that are -- in the instance -- funnelable.
 
 ```kotlin
-package eu.metatools.kfunnels.tests
-
-import eu.metatools.kfunnels.*
-import eu.metatools.kfunnels.base.*
-import java.util.*
-
+/**
+ * A simple thing, it is completely terminal
+ */
 @Funnelable
-data class DataType(
-        val x1: Boolean,
-        val x2: Byte,
-        val x3: Short,
-        val x4: Int,
-        val x5: Long,
-        val x6: Float?,
-        val x7: Double,
-        val x8: Char,
-        val x9: Unit,
-        val x10: String,
-        val x11: List<Int>?) {
-    var x12: Int? = 0
-}
+data class Thing(val i: Int, val j: Float)
 
+/**
+ * Define an interface
+ */
+interface Some
+
+/**
+ * Define an instance of an interface.
+ */
 @Funnelable
-data class Rec(
-        val a: Int,
-        val b: Rec?)
+data class Left(val i: Int) : Some
+
+/**
+ * Define another instance of an interface.
+ */
+@Funnelable
+data class Right(val j: Float) : Some
+
+/**
+ * A thing that has a "non-terminal" variable type [Some] can be [Left] or [Right].
+ */
+@Funnelable
+data class Another(val i: Thing, val s: Some)
+
+/**
+ * A container of some items.
+ */
+@Funnelable
+data class Container(val items: List<Some?>)
 ```
 
 # Use
@@ -43,101 +51,74 @@ registry to serialize and deserialize the type.
 
 ```kotlin
 fun main(args: Array<String>) {
+    // Make a variant of the class with both Left and Right as an argument
+    val itemLeft = Another(Thing(1, 3.4f), Left(3))
+    val itemRight = Another(Thing(1, 3.4f), Right(4.5f))
 
-    // Make data item
-    val original = DataType(true, 23, 43, 124, 512313L, null, 2.0, 'a', Unit, "Hallo", listOf(1, 2, 3))
-    original.x12 = 5555
+    // Print the items for comparison
+    println(itemLeft)
+    println(itemRight)
 
-    // Write using direct module reference
-    TestsModule.std.write(PrintSeqSink, original)
-    println()
-
-    // Write using services
-    ServiceModule.std.write(PrintSeqSink, original)
-    println()
-
-    // Clone using forward/backward path
-    val fwdBwd = ListSink().let {
-        TestsModule.std.write(it, original)
-        TestsModule.std.read<DataType>(ListSource(it.reset()))
+    // Sequence both elements to a list
+    val listLeft = ListSink().let {
+        ServiceModule.std.write(it, itemLeft)
+        it.reset()
+    }
+    val listRight = ListSink().let {
+        ServiceModule.std.write(it, itemRight)
+        it.reset()
     }
 
-    println(fwdBwd)
-    println()
+    // Print the lists
+    println(listLeft)
+    println(listRight)
 
-    // Make a recursive data item
-    val rec = Rec(1, Rec(2, Rec(3, null)))
+    // Read both items back from the list
+    val cloneLeft = ServiceModule.std.read<Another>(ListSource(listLeft))
+    val cloneRight = ServiceModule.std.read<Another>(ListSource(listRight))
 
-    // Write to console
-    TestsModule.std.write(PrintLabelSink, rec)
-    println()
+    // Print the clones as well
+    println(cloneLeft)
+    println(cloneRight)
 
-    // Clone using forward/backward path
-    val recFwdBwd = ListSink().let {
-        TestsModule.std.write(it, rec)
-        TestsModule.std.read<Rec>(ListSource(it.reset()))
+    // Make a class that uses lists
+    val container = Container(listOf(Left(1), Right(2.3f), Left(4), null))
+
+    // Print the original item
+    println(container)
+
+    // Sequence into list
+    val listContainer = ListSink().let {
+        ServiceModule.std.write(it, container)
+        it.reset()
     }
 
-    println(recFwdBwd)
-    println()
+    // Print the output list
+    println(listContainer)
+
+    // Read the clone form the list
+    val cloneContainer = ServiceModule.std.read<Container>(ListSource(listContainer))
+
+    // Print hte clone
+    println(cloneContainer)
 }
 ```
 
 # Output
 
 ```text
-Boolean true
-Byte 23
-Short 43
-Int 124
-Long 512313
-Null true
-Double 2.0
-Char a
-Unit
-String Hallo
-Null false
-Begin nested
-Int 3
-Int 1
-Int 2
-Int 3
-End nested
-Null false
-Int 5555
+Another(i=Thing(i=1, j=3.4), s=Left(i=3))
+Another(i=Thing(i=1, j=3.4), s=Right(j=4.5))
 
-Boolean true
-Byte 23
-Short 43
-Int 124
-Long 512313
-Null true
-Double 2.0
-Char a
-Unit
-String Hallo
-Null false
-Begin nested
-Int 3
-Int 1
-Int 2
-Int 3
-End nested
-Null false
-Int 5555
+[BEGIN, BEGIN_NESTED, BEGIN, 1, 3.4, END, END_NESTED, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left, BEGIN, 3, END, END_NESTED, END]
+[BEGIN, BEGIN_NESTED, BEGIN, 1, 3.4, END, END_NESTED, BEGIN_NESTED, eu.metatools.kfunnels.tests.Right, BEGIN, 4.5, END, END_NESTED, END]
 
-DataType(x1=true, x2=23, x3=43, x4=124, x5=512313, x6=null, x7=2.0, x8=a, x9=kotlin.Unit, x10=Hallo, x11=[1, 2, 3])
+Another(i=Thing(i=1, j=3.4), s=Left(i=3))
+Another(i=Thing(i=1, j=3.4), s=Right(j=4.5))
 
-Int a=1
-Null b: false
-Begin nested b
-Int a=2
-Null b: false
-Begin nested b
-Int a=3
-Null b: true
-End nested
-End nested
+Container(items=[Left(i=1), Right(j=2.3), Left(i=4), null])
 
-Rec(a=1, b=Rec(a=2, b=Rec(a=3, b=null)))
+[BEGIN, BEGIN_NESTED, java.util.Arrays.ArrayList<eu.metatools.kfunnels.tests.Some?>, BEGIN, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 1, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Right?, BEGIN, 2.3, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 4, END, END_NESTED, IS_NULL, END, END_NESTED, END]
+
+Container(items=[Left(i=1), Right(j=2.3), Left(i=4), null])
 ```
