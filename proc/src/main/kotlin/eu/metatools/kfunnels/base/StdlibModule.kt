@@ -4,6 +4,7 @@ import eu.metatools.kfunnels.Funneler
 import eu.metatools.kfunnels.Module
 import eu.metatools.kfunnels.Type
 import eu.metatools.kfunnels.base.lists.ListFunneler
+import eu.metatools.kfunnels.base.lists.ListNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import java.util.*
@@ -62,7 +63,7 @@ object StdlibModule : Module {
             Collection::class,
             List::class ->
                 if (type.arg.nullable)
-                    return SetNullableFunneler as Funneler<T>
+                    return ListNullableFunneler as Funneler<T>
                 else
                     return ListFunneler as Funneler<T>
         }

@@ -199,6 +199,15 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
         }
 
     /**
+     * Makes a dynamic instance where the [kClass] is substituted for the actual type.
+     */
+    fun forInstance(any: Any?) =
+            if (any == null)
+                this
+            else
+                Type(any.javaClass.kotlin, nullable, args)
+
+    /**
      * Maps to a new type where the [arg] is nullable.
      */
     fun argNullable() = Type(kClass, nullable, listOf(-arg))

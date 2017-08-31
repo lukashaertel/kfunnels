@@ -11,6 +11,12 @@ import eu.metatools.kfunnels.Type
 class ListSink : Sink {
     private val list = arrayListOf<Any?>()
 
+    fun reset(): List<Any?> {
+        val result = list.toList()
+        list.clear()
+        return result
+    }
+
     override fun begin(type: Type) {
         list += Event.BEGIN
     }
@@ -21,7 +27,8 @@ class ListSink : Sink {
 
     override fun beginNested(label: String, type: Type, value: Any?) {
         list += Event.BEGIN_NESTED
-        list += type
+        if (!type.isTerminal())
+            list += type.forInstance(value)
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
@@ -83,76 +90,80 @@ class ListSource(val list: List<Any?>) : Source {
 
     private var pos = 0
 
-    private inline fun <reified T> next(): T {
+    private inline fun <reified T> advance(): T {
         check(pos in list.indices)
         return list[pos++] as T
     }
 
-    private inline fun <reified T> peek(): T {
-        check(pos + 1 in list.indices)
-        return list[pos + 1] as T
-    }
+    private val current: Any?
+        get() {
+            check(pos in list.indices)
+            return list[pos]
+        }
 
-    private val at: Any?
+    private val before: Any?
         get() {
             check(pos - 1 in list.indices)
             return list[pos - 1]
         }
 
     override fun begin(type: Type) {
-        check(next<Event>() == Event.BEGIN)
+        check(advance<Event>() == Event.BEGIN)
     }
 
     override fun isEnd() =
-            peek<Event>() == Event.END
+            current == Event.END
 
     override fun end(type: Type) {
-        check(next<Event>() == Event.END)
+        check(advance<Event>() == Event.END)
     }
 
     override fun beginNested(label: String, type: Type): Type {
-        check(next<Event>() == Event.BEGIN_NESTED)
-        return next()
+        check(advance<Event>() == Event.BEGIN_NESTED)
+        if (type.isTerminal())
+            return type
+        else
+            return advance()
     }
 
     override fun endNested(label: String, type: Type) {
-        check(next<Event>() == Event.END_NESTED)
+        check(advance<Event>() == Event.END_NESTED)
     }
 
     override fun getBoolean(label: String): Boolean =
-            next()
+            advance()
 
     override fun getByte(label: String): Byte =
-            next()
+            advance()
 
     override fun getShort(label: String): Short =
-            next()
+            advance()
 
     override fun getInt(label: String): Int =
-            next()
+            advance()
 
     override fun getLong(label: String): Long =
-            next()
+            advance()
 
     override fun getFloat(label: String): Float =
-            next()
+            advance()
 
     override fun getDouble(label: String): Double =
-            next()
+            advance()
 
     override fun getChar(label: String): Char =
-            next()
+            advance()
 
     override fun isNull(label: String): Boolean =
-            when (next<Event>()) {
+            when (advance<Event>()) {
                 Event.IS_NULL -> true
                 Event.IS_NOT_NULL -> false
-                else -> error("Not at a valid list token: $at")
+                else -> error("Not at a valid list token: $before")
             }
 
     override fun getUnit(label: String) =
-            next<Unit>()
+            advance<Unit>()
 
     override fun getString(label: String): String =
-            next()
+            advance()
 }

@@ -19,7 +19,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getBoolean((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveByte -> {
@@ -27,7 +27,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getByte((p++).toLabel())
-                return r
+                return@markAround r
             }
 
 
@@ -36,7 +36,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getShort((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveInt -> {
@@ -44,7 +44,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getInt((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveLong -> {
@@ -52,7 +52,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getLong((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveFloat -> {
@@ -60,7 +60,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getFloat((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveDouble -> {
@@ -68,7 +68,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getDouble((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveChar -> {
@@ -76,7 +76,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getChar((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveUnit -> {
@@ -84,7 +84,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getUnit((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveString -> {
@@ -92,7 +92,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getString((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             else -> {
@@ -102,23 +102,15 @@ object SetFunneler : Funneler<Set<Any>> {
 
                     val r = HashSet<Any>()
                     var p = 0
-                    while (!source.isEnd()) {
-                        source.beginNested(p.toLabel(), type.arg)
-                        r += sub.read(module, type.arg, source)
-                        source.endNested((p++).toLabel(), type.arg)
-                    }
-                    return r
+                    while (!source.isEnd())
+                        r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
+                    return@markAround r
                 } else {
                     val r = HashSet<Any>()
                     var p = 0
-                    while (!source.isEnd()) {
-                        // Resolve element funneler for dynamic type
-                        val t = source.beginNested(p.toLabel(), type.arg)
-                        val sub = module.resolve<Any>(t)
-                        r += sub.read(module, type.arg, source)
-                        source.endNested((p++).toLabel(), type.arg)
-                    }
-                    return r
+                    while (!source.isEnd())
+                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                    return@markAround r
                 }
             }
         }
@@ -136,7 +128,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getBoolean((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveByte -> {
@@ -144,7 +136,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getByte((p++).toLabel())
-                return r
+                return@markAround r
             }
 
 
@@ -153,7 +145,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getShort((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveInt -> {
@@ -161,7 +153,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getInt((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveLong -> {
@@ -169,7 +161,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getLong((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveFloat -> {
@@ -177,7 +169,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getFloat((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveDouble -> {
@@ -185,7 +177,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getDouble((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveChar -> {
@@ -193,7 +185,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getChar((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveUnit -> {
@@ -201,7 +193,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getUnit((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             Type.primitiveString -> {
@@ -209,7 +201,7 @@ object SetFunneler : Funneler<Set<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getString((p++).toLabel())
-                return r
+                return@markAround r
             }
 
             else -> {
@@ -219,23 +211,15 @@ object SetFunneler : Funneler<Set<Any>> {
 
                     val r = HashSet<Any>()
                     var p = 0
-                    while (!source.isEnd()) {
-                        source.beginNested(p.toLabel(), type.arg)
-                        r += sub.read(module, type.arg, source)
-                        source.endNested((p++).toLabel(), type.arg)
-                    }
-                    return r
+                    while (!source.isEnd())
+                        r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
+                    return@markAround r
                 } else {
                     val r = HashSet<Any>()
                     var p = 0
-                    while (!source.isEnd()) {
-                        // Resolve element funneler for dynamic type
-                        val t = source.beginNested(p.toLabel(), type.arg)
-                        val sub = module.resolve<Any>(t)
-                        r += sub.read(module, type.arg, source)
-                        source.endNested((p++).toLabel(), type.arg)
-                    }
-                    return r
+                    while (!source.isEnd())
+                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                    return@markAround r
                 }
             }
         }
@@ -287,14 +271,17 @@ object SetFunneler : Funneler<Set<Any>> {
                     sink.putString(i.toLabel(), it)
 
             else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
 
-                // Write nested
-                for ((i, it) in item.withIndex()) {
-                    sink.beginNested(i.toLabel(), type.arg, it)
-                    sub.write(module, type.arg, sink, it)
-                    sink.endNested(i.toLabel(), type.arg, it)
+                    // Write nested
+                    for ((i, it) in item.withIndex())
+                        sink.putTerminalNested(module, sub, i.toLabel(), type.arg, it)
+                } else {
+                    // Write nested
+                    for ((i, it) in item.withIndex())
+                        sink.putDynamicNested(module, i.toLabel(), type.arg, it)
                 }
             }
         }
@@ -346,14 +333,17 @@ object SetFunneler : Funneler<Set<Any>> {
                     sink.putString(i.toLabel(), it)
 
             else -> {
-                // Resolve element funneler
-                val sub = module.resolve<Any>(type.arg)
+                if (type.arg.isTerminal()) {
+                    // Resolve element funneler for terminal type
+                    val sub = module.resolve<Any>(type.arg)
 
-                // Write nested
-                for ((i, it) in item.withIndex()) {
-                    sink.beginNested(i.toLabel(), type.arg, it)
-                    sub.write(module, type.arg, sink, it)
-                    sink.endNested(i.toLabel(), type.arg, it)
+                    // Write nested
+                    for ((i, it) in item.withIndex())
+                        sink.putTerminalNested(module, sub, i.toLabel(), type.arg, it)
+                } else {
+                    // Write nested
+                    for ((i, it) in item.withIndex())
+                        sink.putDynamicNested(module, i.toLabel(), type.arg, it)
                 }
             }
         }

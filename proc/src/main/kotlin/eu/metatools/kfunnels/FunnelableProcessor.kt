@@ -533,7 +533,38 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         /**
          * True if the type has not substitute, e.g. is final, an object or enum or enum constant.
          */
-        fun isTypeLocked(type: ProtoBuf.Type): Boolean {
+        fun isTerminal(type: ProtoBuf.Type): Boolean {
+            if (type.hasTypeParameter())
+                return false
+
+            // TODO: Replace computeDeclaration with something more sensible (computeCanonicalName)
+            val canonicalName = computeDeclaration(type).substringBefore('<')
+
+            // TODO: Preliminary fix
+            when (canonicalName) {
+                "kotlin.collections.MutableCollection",
+                "kotlin.collections.MutableList",
+                "kotlin.collections.ArrayList",
+                "kotlin.collections.Collection",
+                "kotlin.collections.List",
+                "kotlin.collections.MutableSet",
+                "kotlin.collections.HashSet",
+                "kotlin.collections.Set" -> return true
+            }
+
+            val typeElement = processingEnv.elementUtils.getTypeElement(canonicalName)
+
+            return when (typeElement.kind) {
+                ElementKind.CLASS ->
+                    typeElement.modifiers.contains(Modifier.FINAL)
+                ElementKind.ENUM -> true
+                ElementKind.INTERFACE -> false
+                else -> error { "Cannot determine if $canonicalName is terminal." }
+            }
+        }
+
+        fun isTerminal2(type: ProtoBuf.Type): Boolean {
+            // TODO: This information is not present in the metadata
             if (type.hasTypeParameter())
                 return false
 
@@ -562,35 +593,45 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         fun funneler(type: ProtoBuf.Type) =
                 computeDeclaration(type).replace(Regex("\\W"), "_")
 
-        fun getPrimitive(type: ProtoBuf.Type) =
-                when (typeEnvironment.nameResolver.getString(type.className)) {
-                    "kotlin/Boolean" -> "getBoolean"
-                    "kotlin/Byte" -> "getByte"
-                    "kotlin/Short" -> "getShort"
-                    "kotlin/Int" -> "getInt"
-                    "kotlin/Long" -> "getLong"
-                    "kotlin/Float" -> "getFloat"
-                    "kotlin/Double" -> "getDouble"
-                    "kotlin/Char" -> "getChar"
-                    "kotlin/Unit" -> "getUnit"
-                    "kotlin/String" -> "getString"
-                    else -> throw IllegalArgumentException("not primitive")
-                }
+        fun getter(type: ProtoBuf.Type): String {
+            val infix = if (type.nullable) "Nullable" else ""
+            return when (typeEnvironment.nameResolver.getString(type.className)) {
+                "kotlin/Boolean" -> "get${infix}Boolean"
+                "kotlin/Byte" -> "get${infix}Byte"
+                "kotlin/Short" -> "get${infix}Short"
+                "kotlin/Int" -> "get${infix}Int"
+                "kotlin/Long" -> "get${infix}Long"
+                "kotlin/Float" -> "get${infix}Float"
+                "kotlin/Double" -> "get${infix}Double"
+                "kotlin/Char" -> "get${infix}Char"
+                "kotlin/Unit" -> "get${infix}Unit"
+                "kotlin/String" -> "get${infix}String"
+                else -> if (isTerminal(type))
+                    "get${infix}TerminalNested"
+                else
+                    "get${infix}DynamicNested"
+            }
+        }
 
-        fun putPrimitive(type: ProtoBuf.Type) =
-                when (typeEnvironment.nameResolver.getString(type.className)) {
-                    "kotlin/Boolean" -> "putBoolean"
-                    "kotlin/Byte" -> "putByte"
-                    "kotlin/Short" -> "putShort"
-                    "kotlin/Int" -> "putInt"
-                    "kotlin/Long" -> "putLong"
-                    "kotlin/Float" -> "putFloat"
-                    "kotlin/Double" -> "putDouble"
-                    "kotlin/Char" -> "putChar"
-                    "kotlin/Unit" -> "putUnit"
-                    "kotlin/String" -> "putString"
-                    else -> throw IllegalArgumentException("not primitive")
-                }
+        fun putter(type: ProtoBuf.Type): String {
+            val infix = if (type.nullable) "Nullable" else ""
+            return when (typeEnvironment.nameResolver.getString(type.className)) {
+                "kotlin/Boolean" -> "put${infix}Boolean"
+                "kotlin/Byte" -> "put${infix}Byte"
+                "kotlin/Short" -> "put${infix}Short"
+                "kotlin/Int" -> "put${infix}Int"
+                "kotlin/Long" -> "put${infix}Long"
+                "kotlin/Float" -> "put${infix}Float"
+                "kotlin/Double" -> "put${infix}Double"
+                "kotlin/Char" -> "put${infix}Char"
+                "kotlin/Unit" -> "put${infix}Unit"
+                "kotlin/String" -> "put${infix}String"
+                else -> if (isTerminal(type))
+                    "put${infix}TerminalNested"
+                else
+                    "put${infix}DynamicNested"
+            }
+        }
     }
 
     private fun generate(element: TypeElement, moduleName: Name) {
@@ -610,13 +651,25 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
 
         // Create file content
         src(nameGenerated, "kt") {
-            fun writeFunnelers() {
+            /**
+             * Generates the funnelers that may be loaded statically at the start of funneling
+             */
+            fun generateFunnelers() {
                 // Write funnelers for all non-primitive mappers
-                for (t in environment.requiredTypes.filter { !mapper.isPrimitive(it) }) {
+                for (t in environment.requiredTypes.distinctBy { mapper.computeType(it) }) {
+                    // Do not generate funnelers for primitive types
+                    if (mapper.isPrimitive(t))
+                        continue
+
+                    // Do not preemptively resolve funneler for non-terminals
+                    if (!mapper.isTerminal(t))
+                        continue
+
                     // Compute the declaration and the type
                     val label = mapper.funneler(t)
                     val decl = if (t.hasTypeParameter()) mapper.computeBound(t) else mapper.computeDeclaration(t, true)
                     val type = mapper.computeType(t, true)
+
                     // Write a value with the funneler for that declaration
                     writeTrimmed("""
         |
@@ -641,476 +694,219 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         | * Funnels and unfunnels $target.
         | */
         |object ${nameGenerated.className} : GeneratedFunneler<$target$liftedTypeArgs> {
-        |   override val module = ${moduleName.joined}
+        |    override val module = ${moduleName.joined}
         |
-        |   override val type = $target::class
+        |    override val type = $target::class""")
+
+            /**
+             * Generates the read method for either suspended or unsuspended sources.
+             */
+            fun generateRead(isSuspend: Boolean) {
+                // Compute prefixes for suspension
+                val funSuspend = if (isSuspend) "suspend " else ""
+                val pivotSuspend = if (isSuspend) "Suspend" else ""
+
+                writeTrimmed("""
         |
-        |   override fun read(module: Module, type: Type, source: SeqSource)
-        |       : $target$liftedTypeArgs = source.markAround(type) {""")
+        |    override $funSuspend fun read(module: Module, type: Type, source: ${pivotSuspend}Source)
+        |           : $target$liftedTypeArgs = source.markAround(type) {""")
+                if (environment.isInstanitable) {
+                    // Write the funnelers used by this method
+                    generateFunnelers()
 
+                    // Handle a primary constructor that assigns properties
+                    environment.withPrimaryConstructor {
+                        for ((i, p) in it.valueParameterList.withIndex())
+                            if (mapper.isPrimitive(p.type)) {
+                                // Get property name and getter
+                                val name = environment.nameResolver.getString(p.name)
+                                val getter = mapper.getter(p.type)
 
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            // Read from sequential source /////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-
-            if (environment.isInstanitable) {
-
-                // Write the funnelers used by this method
-                writeFunnelers()
-
-                // Handle a primary constructor that assigns properties
-                environment.withPrimaryConstructor {
-                    for ((i, p) in it.valueParameterList.withIndex())
-                        if (mapper.isPrimitive(p.type)) {
-                            // Get reader
-                            val reader = mapper.getPrimitive(p.type)
-
-                            if (p.type.nullable)
-                            // Write the reading fragment for nullable
                                 writeTrimmed("""
         |
-        |       val entry$i = if(source.isNull()) null else source.$reader()""")
-                            else
-                            // Write the reading fragment for non-nullable
+        |       val entry$i = source.$getter("$name")""")
+                            } else if (mapper.isTerminal(p.type)) {
+                                // Get property name and funneler
+                                val name = environment.nameResolver.getString(p.name)
+                                val label = mapper.funneler(p.type)
+                                val getter = mapper.getter(p.type)
+
+                                // Write the nested reading fragment
                                 writeTrimmed("""
         |
-        |       val entry$i = source.$reader()""")
-                        } else {
-                            // Get funneler
-                            val label = mapper.funneler(p.type)
+        |       val entry$i = source.$getter(module, $label, "$name", ${label}_type)""")
+                            } else {
+                                // Get property name and funneler
+                                val name = environment.nameResolver.getString(p.name)
+                                val type = mapper.computeType(p.type, true)
+                                val getter = mapper.getter(p.type)
+                                val declaration = mapper.computeDeclaration(p.type, true)
 
-                            if (p.type.nullable)
-                            // Write the nested reading fragment for nullable
+                                // Write the nested reading fragment
                                 writeTrimmed("""
         |
-        |       val entry$i = source.readIfNotNull {
-        |           source.beginNested()
-        |           val r = $label.read(module, ${label}_type, source)
-        |           source.endNested()
-        |           r
-        |       }""")
-                            else
-                            // Write the nested reading fragment for non-nullable
-                                writeTrimmed("""
-        |
-        |       source.beginNested()
-        |       val entry$i = $label.read(module, ${label}_type, source)
-        |       source.endNested()""")
-                        }
+        |       val entry$i = source.$getter<$declaration>(module, "$name", $type)""")
+                            }
 
-                    val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
+                        val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
 
-                    writeTrimmed("""
+                        writeTrimmed("""
         |
-        |       return $target($arguments).apply {""")
+        |       val result = $target($arguments)""")
 
-                }
-
-                // Handle an empty primary constructor
-                if (environment.primaryConstructor == null) {
-                    writeTrimmed("""
-        |
-        |       return $target().apply {""")
-                }
-
-                for (p in environment.postVariables)
-                    if (mapper.isPrimitive(p.returnType)) {
-                        // Get property name and reader
-                        val name = environment.nameResolver.getString(p.name)
-                        val reader = mapper.getPrimitive(p.returnType)
-
-                        if (p.returnType.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       $name = if(source.isNull()) null else source.$reader()""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
-        |
-        |       $name = source.$reader()""")
-                    } else {
-                        // Get property name and funneler
-                        val name = environment.nameResolver.getString(p.name)
-                        val label = mapper.funneler(p.returnType)
-
-                        if (p.returnType.nullable)
-                        // Write the nested reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       $name = source.readIfNotNull {
-        |           source.beginNested()
-        |           r = $label.read(module, ${label}_type, source)
-        |           source.endNested()
-        |           r
-        |       }""")
-                        else
-                        // Write the nested reading fragment for non-nullable
-                            writeTrimmed("""
-        |
-        |       source.beginNested()
-        |       $name = $label.read(module, ${label}_type, source)
-        |       source.endNested()""")
                     }
 
-                writeTrimmed("""
+                    // Handle an empty primary constructor
+                    if (environment.primaryConstructor == null) {
+                        writeTrimmed("""
         |
-        |       }
-                """)
-            } else {
-                writeTrimmed("""
-        |
-        |       throw UnsupportedOperationException("Class is abstract")
-                """)
-            }
+        |       val result = $target()""")
+                    }
 
-            writeTrimmed("""
-        |
-        |   }
-        |
-        |   override fun read(module: Module, type: Type, source: LabelSource)
-        |       : $target$liftedTypeArgs = source.markAround(type) {""")
-
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            // Read from labeled source ////////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            if (environment.isInstanitable) {
-                // Write the funnelers used by this method
-                writeFunnelers()
-
-                // Handle a primary constructor that assigns properties
-                environment.withPrimaryConstructor {
-                    for ((i, p) in it.valueParameterList.withIndex())
-                        if (mapper.isPrimitive(p.type)) {
-                            // Get property name and reader
+                    for (p in environment.postVariables)
+                        if (mapper.isPrimitive(p.returnType)) {
+                            // Get property name and getter
                             val name = environment.nameResolver.getString(p.name)
-                            val reader = mapper.getPrimitive(p.type)
+                            val getter = mapper.getter(p.returnType)
 
-                            if (p.type.nullable)
-                            // Write the reading fragment for nullable
-                                writeTrimmed("""
+                            writeTrimmed("""
         |
-        |       val entry$i = if(source.isNull("$name")) null else source.$reader("$name")""")
-                            else
-                            // Write the reading fragment for non-nullable
-                                writeTrimmed("""
-        |
-        |       val entry$i = source.$reader("$name")""")
-                        } else {
+        |       result.$name = source.$getter("$name")""")
+                        } else if (mapper.isTerminal(p.returnType)) {
                             // Get property name and funneler
                             val name = environment.nameResolver.getString(p.name)
-                            val label = mapper.funneler(p.type)
+                            val label = mapper.funneler(p.returnType)
+                            val getter = mapper.getter(p.returnType)
 
                             // Write the nested reading fragment
                             writeTrimmed("""
         |
-        |       source.beginNested("$name")
-        |       val entry$i = $label.read(module, ${label}_type, source)
-        |       source.endNested("$name")""")
+        |       result.$name = source.$getter(module, $label, "$name", ${label}_type)""")
+                        } else {
+                            // Get property name and funneler
+                            val name = environment.nameResolver.getString(p.name)
+                            val type = mapper.computeType(p.returnType, true)
+                            val getter = mapper.getter(p.returnType)
+                            val declaration = mapper.computeDeclaration(p.returnType, true)
+
+                            // Write the nested reading fragment
+                            writeTrimmed("""
+        |
+        |       result.$name = source.$getter<$declaration>(module, "$name", $type)""")
                         }
 
-                    val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
-
                     writeTrimmed("""
         |
-        |       return $target($arguments).apply {""")
-
+        |       result
+        |   }
+                """)
+                } else {
+                    writeTrimmed("""
+        |
+        |       throw UnsupportedOperationException("Class is abstract")
+                """)
                 }
+            }
 
-                // Handle an empty primary constructor
-                if (environment.primaryConstructor == null) {
-                    writeTrimmed("""
+            // Generate unsuspended and suspended variant
+            generateRead(false)
+            generateRead(true)
+
+            /**
+             * Generates the write method for either suspended or unsuspended sinks.
+             */
+            fun generateWrite(isSuspend: Boolean) {
+                // Compute prefixes for suspension
+                val funSuspend = if (isSuspend) "suspend " else ""
+                val pivotSuspend = if (isSuspend) "Suspend" else ""
+
+                writeTrimmed("""
         |
-        |       return $target().apply {""")
+        |   override $funSuspend fun write(module: Module, type: Type, sink: ${pivotSuspend}Sink, item: $target$liftedTypeArgs)
+        |           = sink.markAround(type) {""")
+
+                // Write the funnelers used by this method, no dynamics
+                generateFunnelers()
+
+                // Handle a primary constructor that contains properties
+                environment.withPrimaryConstructor {
+                    for (p in it.valueParameterList)
+                        if (mapper.isPrimitive(p.type)) {
+                            // Get property name and putter
+                            val name = environment.nameResolver.getString(p.name)
+                            val putter = mapper.putter(p.type)
+
+                            // Write the reading fragment for nullable
+                            writeTrimmed("""
+        |
+        |       sink.$putter("$name", item.$name)""")
+                        } else if (mapper.isTerminal(p.type)) {
+                            // Get property name and funneler
+                            val name = environment.nameResolver.getString(p.name)
+                            val label = mapper.funneler(p.type)
+                            val putter = mapper.putter(p.type)
+
+                            // Write the reading fragment for non-nullable
+                            writeTrimmed("""
+        |
+        |       sink.$putter(module, ${label}, "$name", ${label}_type, item.$name)""")
+                        } else {
+                            // Get property name and funneler
+                            val name = environment.nameResolver.getString(p.name)
+                            val type = mapper.computeType(p.type, true)
+                            val putter = mapper.putter(p.type)
+
+                            // Write the reading fragment for non-nullable
+                            writeTrimmed("""
+        |
+        |       sink.$putter(module, "$name", $type, item.$name)""")
+                        }
+
                 }
 
                 for (p in environment.postVariables)
                     if (mapper.isPrimitive(p.returnType)) {
-                        // Get property name and reader
+                        // Get property name and putter
                         val name = environment.nameResolver.getString(p.name)
-                        val reader = mapper.getPrimitive(p.returnType)
+                        val putter = mapper.putter(p.returnType)
 
-                        // Write the reading fragment, target the receiver
+                        // Write the reading fragment for nullable
                         writeTrimmed("""
         |
-        |           $name = source.$reader("$name")""")
-                    } else {
+        |       sink.$putter("$name", item.$name)""")
+                    } else if (mapper.isTerminal(p.returnType)) {
                         // Get property name and funneler
                         val name = environment.nameResolver.getString(p.name)
                         val label = mapper.funneler(p.returnType)
+                        val putter = mapper.putter(p.returnType)
 
-                        // Write the nested reading fragment, target the receiver
+                        // Write the reading fragment for non-nullable
                         writeTrimmed("""
         |
-        |           source.beginNested("$name")
-        |           $name = $label.read(module, ${label}_type, source)
-        |           source.endNested("$name")""")
-                    }
-
-                writeTrimmed("""
-        |
-        |       }
-                """)
-            } else {
-                writeTrimmed("""
-        |
-        |       throw UnsupportedOperationException("Class is abstract")
-                """)
-            }
-
-            writeTrimmed("""
-        |
-        |   }
-        |
-        |   override fun write(module: Module, type: Type, sink: SeqSink, item: $target$liftedTypeArgs)
-        |       = sink.markAround(type) {""")
-
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            // Write to sequential sink ////////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // Write the funnelers used by this method
-            writeFunnelers()
-
-            // Handle a primary constructor that contains properties
-            environment.withPrimaryConstructor {
-
-                for (p in it.valueParameterList)
-                    if (mapper.isPrimitive(p.type)) {
-                        // Get property name and writer
-                        val name = environment.nameResolver.getString(p.name)
-                        val writer = mapper.putPrimitive(p.type)
-
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       if(item.$name == null)
-        |           sink.putNull(true)
-        |       else {
-        |           sink.putNull(false)
-        |           sink.$writer(item.$name)
-        |       }""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
-        |
-        |       sink.$writer(item.$name)""")
+        |       sink.$putter(module, ${label}, "$name", ${label}_type, item.$name)""")
                     } else {
                         // Get property name and funneler
                         val name = environment.nameResolver.getString(p.name)
-                        val label = mapper.funneler(p.type)
+                        val type = mapper.computeType(p.returnType, true)
+                        val putter = mapper.putter(p.returnType)
 
-
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       if(item.$name == null)
-        |           sink.putNull(true)
-        |       else {
-        |           sink.putNull(false)
-        |           sink.beginNested()
-        |           $label.write(module, ${label}_type, sink, item.$name)
-        |           sink.endNested()
-        |       }""")
-                        else
                         // Write the reading fragment for non-nullable
-                            writeTrimmed("""
+                        writeTrimmed("""
         |
-        |       sink.beginNested()
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
+        |       sink.$putter(module, "$name", $type, item.$name)""")
                     }
 
+
+                writeTrimmed("""
+        |
+        |   }""")
             }
 
-            for (p in environment.postVariables)
-                if (mapper.isPrimitive(p.returnType)) {
-                    // Get property name and writer
-                    val name = environment.nameResolver.getString(p.name)
-                    val writer = mapper.putPrimitive(p.returnType)
-
-                    if (p.returnType.nullable)
-                    // Write the writing fragment for nullable
-                        writeTrimmed("""
-        |
-        |       val capture_$name = item.$name
-        |       if(capture_$name == null)
-        |           sink.putNull(true)
-        |       else {
-        |           sink.putNull(false)
-        |           sink.$writer(capture_$name)
-        |       }""")
-                    else
-                    // Write the writing fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       sink.$writer(item.$name)""")
-                } else {
-                    // Get property name and funneler
-                    val name = environment.nameResolver.getString(p.name)
-                    val label = mapper.funneler(p.returnType)
-
-                    // Write the nested writing fragment
-                    writeTrimmed("""
-        |
-        |       sink.beginNested()
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
-
-                    if (p.returnType.nullable)
-                    // Write the nested writing fragment for nullable
-                        writeTrimmed("""
-        |
-        |       val capture_$name = item.$name
-        |       if(capture_$name == null)
-        |           sink.putNull(true)
-        |       else {
-        |           sink.putNull(false)
-        |           sink.beginNested()
-        |           $label.write(module, ${label}_type, sink, capture_$name)
-        |           sink.endNested()
-        |       }""")
-                    else
-                    // Write the nested writing fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       sink.beginNested()
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested()""")
-                }
-
+            generateWrite(false)
+            generateWrite(true)
 
             writeTrimmed("""
         |
-        |   }
-        |
-        |   override fun write(module: Module, type: Type, sink: LabelSink, item: $target$liftedTypeArgs)
-        |       = sink.markAround(type) {""")
-
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-            // Write to labeled sink ///////////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // Write the funnelers used by this method
-            writeFunnelers()
-
-            // Handle a primary constructor that contains properties
-            environment.withPrimaryConstructor {
-                for (p in it.valueParameterList)
-                    if (mapper.isPrimitive(p.type)) {
-                        // Get property name and writer
-                        val name = environment.nameResolver.getString(p.name)
-                        val writer = mapper.putPrimitive(p.type)
-
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       if(item.$name == null)
-        |           sink.putNull("$name", true)
-        |       else {
-        |           sink.putNull("$name", false)
-        |           sink.$writer("$name", item.$name)
-        |       }""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
-        |
-        |       sink.$writer("$name", item.$name)""")
-                    } else {
-                        // Get property name and funneler
-                        val name = environment.nameResolver.getString(p.name)
-                        val label = mapper.funneler(p.type)
-
-
-                        if (p.type.nullable)
-                        // Write the reading fragment for nullable
-                            writeTrimmed("""
-        |
-        |       if(item.$name == null)
-        |           sink.putNull("$name", true)
-        |       else {
-        |           sink.putNull("$name", false)
-        |           sink.beginNested("$name")
-        |           $label.write(module, ${label}_type, sink, item.$name)
-        |           sink.endNested("$name")
-        |       }""")
-                        else
-                        // Write the reading fragment for non-nullable
-                            writeTrimmed("""
-        |
-        |       sink.beginNested("$name")
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested("$name")""")
-                    }
-
-            }
-
-            for (p in environment.postVariables)
-                if (mapper.isPrimitive(p.returnType)) {
-                    // Get property name and writer
-                    val name = environment.nameResolver.getString(p.name)
-                    val writer = mapper.putPrimitive(p.returnType)
-
-                    if (p.returnType.nullable)
-                    // Write the writing fragment for nullable
-                        writeTrimmed("""
-        |
-        |       val capture_$name = item.$name
-        |       if(capture_$name == null)
-        |           sink.putNull("$name", true)
-        |       else {
-        |           sink.putNull("$name", false)
-        |           sink.$writer("$name", capture_$name)
-        |       }""")
-                    else
-                    // Write the writing fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       sink.$writer("$name", item.$name)""")
-                } else {
-                    // Get property name and funneler
-                    val name = environment.nameResolver.getString(p.name)
-                    val label = mapper.funneler(p.returnType)
-
-                    // Write the nested writing fragment
-                    writeTrimmed("""
-        |
-        |       sink.beginNested("$name")
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested("$name")""")
-
-                    if (p.returnType.nullable)
-                    // Write the nested writing fragment for nullable
-                        writeTrimmed("""
-        |
-        |       val capture_$name = item.$name
-        |       if(capture_$name == null)
-        |           sink.putNull("$name", true)
-        |       else {
-        |           sink.putNull("$name", false)
-        |           sink.beginNested("$name")
-        |           $label.write(module, ${label}_type, sink, capture_$name)
-        |           sink.endNested("$name")
-        |       }""")
-                    else
-                    // Write the nested writing fragment for non-nullable
-                        writeTrimmed("""
-        |
-        |       sink.beginNested("$name")
-        |       $label.write(module, ${label}_type, sink, item.$name)
-        |       sink.endNested("$name")""")
-                }
-
-
-            writeTrimmed("""
-        |
-        |   }
         |}
         """)
         }
@@ -1119,8 +915,11 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
     private fun note(message: () -> Any?) =
             processingEnv.messager.printMessage(Diagnostic.Kind.NOTE, message()?.toString())
 
-    private fun error(message: () -> Any?) =
-            processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, message()?.toString())
+    private fun error(message: () -> Any?): Nothing {
+        val msg = message()?.toString() ?: ""
+        processingEnv.messager.printMessage(Diagnostic.Kind.ERROR, msg)
+        kotlin.error(msg)
+    }
 
     private fun warn(message: () -> Any?) =
             processingEnv.messager.printMessage(Diagnostic.Kind.WARNING, message()?.toString())

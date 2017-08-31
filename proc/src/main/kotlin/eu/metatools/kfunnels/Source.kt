@@ -358,6 +358,109 @@ suspend fun SuspendSource.getNullableString(label: String): String? =
             getString(label)
 
 
+/**
+ * Gets a nested value for a terminal type.
+ */
+fun <T> Source.getTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T {
+    beginNested(label, type)
+    val r = funneler.read(module, type, this)
+    endNested(label, type)
+    return r
+}
+
+/**
+ * Gets a nested value for a terminal type. Prefixes a read to the null flag.
+ */
+fun <T> Source.getNullableTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T? {
+    if (isNull(label))
+        return null
+
+    beginNested(label, type)
+    val r = funneler.read(module, type, this)
+    endNested(label, type)
+    return r
+}
+
+
+/**
+ * Gets a nested value for a terminal type.
+ */
+suspend fun <T> SuspendSource.getTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T {
+    beginNested(label, type)
+    val r = funneler.read(module, type, this)
+    endNested(label, type)
+    return r
+}
+
+/**
+ * Gets a nested value for a terminal type. Prefixes a read to the null flag.
+ */
+suspend fun <T> SuspendSource.getNullableTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T? {
+    if (isNull(label))
+        return null
+
+    beginNested(label, type)
+    val r = funneler.read(module, type, this)
+    endNested(label, type)
+    return r
+}
+
+
+/**
+ * Gets a nested value for a terminal type.
+ */
+fun <T> Source.getDynamicNested(module: Module, label: String, type: Type): T {
+    val sub = beginNested(label, type)
+    val funneler = module.resolve<T>(sub)
+    val r = funneler.read(module, sub, this)
+    endNested(label, type)
+    return r
+}
+
+/**
+ * Gets a nested value for a terminal type. Prefixes a read to the null flag.
+ */
+fun <T> Source.getNullableDynamicNested(module: Module, label: String, type: Type): T? {
+    if (isNull(label))
+        return null
+
+    val sub = beginNested(label, type)
+    val funneler = module.resolve<T>(sub)
+    val r = funneler.read(module, sub, this)
+    endNested(label, type)
+    return r
+}
+
+
+/**
+ * Gets a nested value for a terminal type.
+ */
+suspend fun <T> SuspendSource.getDynamicNested(module: Module, label: String, type: Type): T {
+    val sub = beginNested(label, type)
+    val funneler = module.resolve<T>(sub)
+    val r = funneler.read(module, sub, this)
+    endNested(label, type)
+    return r
+}
+
+/**
+ * Gets a nested value for a terminal type. Prefixes a read to the null flag.
+ */
+suspend fun <T> SuspendSource.getNullableDynamicNested(module: Module, label: String, type: Type): T? {
+    if (isNull(label))
+        return null
+
+    val sub = beginNested(label, type)
+    val funneler = module.resolve<T>(sub)
+    val r = funneler.read(module, sub, this)
+    endNested(label, type)
+    return r
+}
+
 
 /**
  * Marks beginning and ending of a [type] around the given [block].
@@ -369,6 +472,7 @@ inline fun <T> Source.markAround(type: Type, block: () -> T): T {
     end(type)
     return result
 }
+
 /**
  * Marks beginning and ending of a [type] around the given [block].
  * @return Returns the block's return value

@@ -3,27 +3,90 @@ package eu.metatools.kfunnels.tests
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.*
 
-enum class Color {
-    Red, Green, Blue
-}
+/**
+ * A simple thing, it is completely terminal
+ */
+@Funnelable
+data class Thing(val i: Int, val j: Float)
 
-//@Funnelable
-//data class Thing(val i: Int, val j: Float)
-//
-//@Funnelable
-//data class Container<T, U>(val t: T, val u: U, val c: Color)
+/**
+ * Define an interface
+ */
+interface Some
+
+/**
+ * Define an instance of an interface.
+ */
+@Funnelable
+data class Left(val i: Int) : Some
+
+/**
+ * Define another instance of an interface.
+ */
+@Funnelable
+data class Right(val j: Float) : Some
+
+/**
+ * A thing that has a "non-terminal" variable type [Some] can be [Left] or [Right].
+ */
+@Funnelable
+data class Another(val i: Thing, val s: Some)
+
+/**
+ * A container of some items.
+ */
+@Funnelable
+data class Container(val items: List<Some?>)
 
 fun main(args: Array<String>) {
-    val l = listOf(listOf(1, 2, 3), listOf(2, 3, 4))
-    val t = Type.list(Type.list(Type.int))
-    val f = StdlibModule.resolve<List<List<Int>>>(t)
+    // Make a variant of the class with both Left and Right as an argument
+    val itemLeft = Another(Thing(1, 3.4f), Left(3))
+    val itemRight = Another(Thing(1, 3.4f), Right(4.5f))
 
-    f.write(StdlibModule, t, PrintSink.sequence, l)
+    // Print the items for comparison
+    println(itemLeft)
+    println(itemRight)
 
-//    // Make the container object.
-//    val c = Container(Thing(10, 2.3f), listOf(1, 2, 3), Color.Red)
-//    val s = ListSink()
-//
-//    // Write to sink
-//    ServiceModule.std.write(s, c)
+    // Sequence both elements to a list
+    val listLeft = ListSink().let {
+        ServiceModule.std.write(it, itemLeft)
+        it.reset()
+    }
+    val listRight = ListSink().let {
+        ServiceModule.std.write(it, itemRight)
+        it.reset()
+    }
+
+    // Print the lists
+    println(listLeft)
+    println(listRight)
+
+    // Read both items back from the list
+    val cloneLeft = ServiceModule.std.read<Another>(ListSource(listLeft))
+    val cloneRight = ServiceModule.std.read<Another>(ListSource(listRight))
+
+    // Print the clones as well
+    println(cloneLeft)
+    println(cloneRight)
+
+    // Make a class that uses lists
+    val container = Container(listOf(Left(1), Right(2.3f), Left(4), null))
+
+    // Print the original item
+    println(container)
+
+    // Sequence into list
+    val listContainer = ListSink().let {
+        ServiceModule.std.write(it, container)
+        it.reset()
+    }
+
+    // Print the output list
+    println(listContainer)
+
+    // Read the clone form the list
+    val cloneContainer = ServiceModule.std.read<Container>(ListSource(listContainer))
+
+    // Print hte clone
+    println(cloneContainer)
 }

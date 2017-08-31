@@ -408,6 +408,116 @@ suspend fun SuspendSink.putNullableString(label: String, value: String?) {
 }
 
 /**
+ * Puts a nested value for a type.
+ */
+fun <T> Sink.putTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T) {
+    beginNested(label, type, value)
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
+ * Puts a nested value for a type. Prefixes a read to the null flag.
+ */
+fun <T> Sink.putNullableTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T?) {
+    if (value == null) {
+        putNull(label, true)
+        return
+    }
+    putNull(label, false)
+    beginNested(label, type, value)
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+/**
+ * Puts a nested value for a type.
+ */
+suspend fun <T> SuspendSink.putTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T) {
+    beginNested(label, type, value)
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
+ * Puts a nested value for a type. Prefixes a read to the null flag.
+ */
+suspend fun <T> SuspendSink.putNullableTerminalNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T?) {
+    if (value == null) {
+        putNull(label, true)
+        return
+    }
+    putNull(label, false)
+    beginNested(label, type, value)
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
+ * Puts a nested value for a type.
+ */
+fun <T> Sink.putDynamicNested(
+        module: Module, label: String, type: Type, value: T) {
+    beginNested(label, type, value)
+    val funneler = module.resolve<T>(type.forInstance(value))
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
+ * Puts a nested value for a type. Prefixes a read to the null flag.
+ */
+fun <T> Sink.putNullableDynamicNested(
+        module: Module, label: String, type: Type, value: T?) {
+    if (value == null) {
+        putNull(label, true)
+        return
+    }
+    putNull(label, false)
+    beginNested(label, type, value)
+    val funneler = module.resolve<T>(type.forInstance(value))
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+/**
+ * Puts a nested value for a type.
+ */
+suspend fun <T> SuspendSink.putDynamicNested(
+        module: Module, label: String, type: Type, value: T) {
+    beginNested(label, type, value)
+    val funneler = module.resolve<T>(type.forInstance(value))
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
+ * Puts a nested value for a type. Prefixes a read to the null flag.
+ */
+suspend fun <T> SuspendSink.putNullableDynamicNested(
+        module: Module, label: String, type: Type, value: T?) {
+    if (value == null) {
+        putNull(label, true)
+        return
+    }
+    putNull(label, false)
+    beginNested(label, type, value)
+    val funneler = module.resolve<T>(type.forInstance(value))
+    funneler.write(module, type, this, value)
+    endNested(label, type, value)
+}
+
+
+/**
  * Marks beginning and ending of a [type] around the given [block].
  */
 inline fun Sink.markAround(type: Type, block: () -> Unit) {
