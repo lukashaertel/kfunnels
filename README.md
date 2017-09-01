@@ -130,6 +130,21 @@ fun main(args: Array<String>) {
 
     // Print the clone
     println(cloneGeneric)
+
+    // Get a map of the left item
+    val mapLeft = MapSink().let {
+        ServiceModule.std.write(it, itemLeft)
+        it.reset()
+    }
+
+    // Print the map
+    println(mapLeft)
+
+    // Read clone from map
+    val cloneLeftByMap = ServiceModule.std.read<Another>(MapSource(mapLeft))
+
+    // Print the clone
+    println(cloneLeftByMap)
 }
 ```
 
