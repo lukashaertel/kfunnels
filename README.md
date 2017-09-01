@@ -201,10 +201,11 @@ class ListSink : Sink {
         list += Event.END
     }
 
-    override fun beginNested(label: String, type: Type, value: Any?) {
+    override fun beginNested(label: String, type: Type, value: Any?): Boolean {
         list += Event.BEGIN_NESTED
         if (!type.isTerminal())
             list += type.forInstance(value)
+        return true
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
