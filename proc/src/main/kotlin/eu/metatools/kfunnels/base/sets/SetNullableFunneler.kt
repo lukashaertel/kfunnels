@@ -106,10 +106,12 @@ object SetNullableFunneler : Funneler<Set<Any?>> {
                         r += source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = HashSet<Any?>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getNullableDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                        r += source.getNullableDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 }
             }
@@ -215,10 +217,12 @@ object SetNullableFunneler : Funneler<Set<Any?>> {
                         r += source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = HashSet<Any?>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getNullableDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                        r += source.getNullableDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 }
             }

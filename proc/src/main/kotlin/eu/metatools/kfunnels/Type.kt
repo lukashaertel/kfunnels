@@ -271,7 +271,19 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
      * Returns true if the type can not be substituted by another type.
      */
     fun isTerminal() =
-            !(kClass.isAbstract || kClass.isOpen || kClass.isSealed)
+            when (kClass) {
+            // Aligned with the funnelable processor
+                MutableCollection::class,
+                kotlin.collections.MutableList::class,
+                kotlin.collections.ArrayList::class,
+                kotlin.collections.Collection::class,
+                kotlin.collections.List::class,
+                kotlin.collections.MutableSet::class,
+                kotlin.collections.HashSet::class,
+                kotlin.collections.Set::class -> true
+            // Default detection
+                else -> !(kClass.isAbstract || kClass.isOpen || kClass.isSealed)
+            }
 
     private fun isDefaultInclude(): Boolean =
             kClass.qualifiedName?.let {

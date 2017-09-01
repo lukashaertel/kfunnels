@@ -1,6 +1,24 @@
 package eu.metatools.kfunnels
 
-import eu.metatools.kfunnels.base.ListSink
+/**
+ * Result of [Source.beginNested] and [SuspendSource.beginNested].
+ */
+sealed class Nested
+
+/**
+ * A value could already be determined, no further unfunneling required.
+ */
+data class Value<T>(val item: T) : Nested()
+
+/**
+ * Further unfunneling required, but for a different type.
+ */
+data class Substitute(val type: Type) : Nested()
+
+/**
+ * Go ahead with unfunneling as is.
+ */
+object Continue : Nested()
 
 /**
  * A source that provides values for a [Funneler].
@@ -25,7 +43,7 @@ interface Source {
     /**
      * Enters the nesting of a new element for static [type]. May return a substitute type.
      */
-    fun beginNested(label: String, type: Type): Type
+    fun beginNested(label: String, type: Type): Nested
 
     /**
      * Leaves the nesting of the element for static [type].
@@ -203,7 +221,7 @@ interface SuspendSource {
     /**
      * Enters the nesting of a new element for static [type]. May return a substitute type.
      */
-    suspend fun beginNested(label: String, type: Type): Type
+    suspend fun beginNested(label: String, type: Type): Nested
 
     /**
      * Leaves the nesting of the element for static [type].
@@ -357,16 +375,30 @@ suspend fun SuspendSource.getNullableString(label: String): String? =
         else
             getString(label)
 
+private fun errorSubstitutionInTerminal(): Nothing {
+    error("Substitute is not a valid output for nesting of terminal types.")
+}
 
 /**
  * Gets a nested value for a terminal type.
  */
 fun <T> Source.getTerminalNested(
         module: Module, funneler: Funneler<T>, label: String, type: Type): T {
-    beginNested(label, type)
-    val r = funneler.read(module, type, this)
-    endNested(label, type)
-    return r
+    val sub = beginNested(label, type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> errorSubstitutionInTerminal()
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 /**
@@ -377,10 +409,21 @@ fun <T> Source.getNullableTerminalNested(
     if (isNull(label))
         return null
 
-    beginNested(label, type)
-    val r = funneler.read(module, type, this)
-    endNested(label, type)
-    return r
+    val sub = beginNested(label, type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> errorSubstitutionInTerminal()
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 
@@ -389,10 +432,21 @@ fun <T> Source.getNullableTerminalNested(
  */
 suspend fun <T> SuspendSource.getTerminalNested(
         module: Module, funneler: Funneler<T>, label: String, type: Type): T {
-    beginNested(label, type)
-    val r = funneler.read(module, type, this)
-    endNested(label, type)
-    return r
+    val sub = beginNested(label, type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> errorSubstitutionInTerminal()
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 /**
@@ -403,62 +457,137 @@ suspend fun <T> SuspendSource.getNullableTerminalNested(
     if (isNull(label))
         return null
 
-    beginNested(label, type)
-    val r = funneler.read(module, type, this)
-    endNested(label, type)
-    return r
+    val sub = beginNested(label, type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> errorSubstitutionInTerminal()
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 
 /**
  * Gets a nested value for a terminal type.
  */
-fun <T> Source.getDynamicNested(module: Module, label: String, type: Type): T {
+fun <T> Source.getDynamicNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T {
     val sub = beginNested(label, type)
-    val funneler = module.resolve<T>(sub)
-    val r = funneler.read(module, sub, this)
-    endNested(label, type)
-    return r
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> {
+            val subFunneler = module.resolve<T>(sub.type)
+            val r = subFunneler.read(module, sub.type, this)
+            endNested(label, type)
+            return r
+        }
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 /**
  * Gets a nested value for a terminal type. Prefixes a read to the null flag.
  */
-fun <T> Source.getNullableDynamicNested(module: Module, label: String, type: Type): T? {
+fun <T> Source.getNullableDynamicNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T? {
     if (isNull(label))
         return null
 
     val sub = beginNested(label, type)
-    val funneler = module.resolve<T>(sub)
-    val r = funneler.read(module, sub, this)
-    endNested(label, type)
-    return r
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> {
+            val subFunneler = module.resolve<T>(sub.type)
+            val r = subFunneler.read(module, sub.type, this)
+            endNested(label, type)
+            return r
+        }
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 
 /**
  * Gets a nested value for a terminal type.
  */
-suspend fun <T> SuspendSource.getDynamicNested(module: Module, label: String, type: Type): T {
+suspend fun <T> SuspendSource.getDynamicNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T {
     val sub = beginNested(label, type)
-    val funneler = module.resolve<T>(sub)
-    val r = funneler.read(module, sub, this)
-    endNested(label, type)
-    return r
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> {
+            val subFunneler = module.resolve<T>(sub.type)
+            val r = subFunneler.read(module, sub.type, this)
+            endNested(label, type)
+            return r
+        }
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 /**
  * Gets a nested value for a terminal type. Prefixes a read to the null flag.
  */
-suspend fun <T> SuspendSource.getNullableDynamicNested(module: Module, label: String, type: Type): T? {
+suspend fun <T> SuspendSource.getNullableDynamicNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type): T? {
     if (isNull(label))
         return null
 
     val sub = beginNested(label, type)
-    val funneler = module.resolve<T>(sub)
-    val r = funneler.read(module, sub, this)
-    endNested(label, type)
-    return r
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            endNested(label, type)
+            return sub.item as T
+        }
+        is Substitute -> {
+            val subFunneler = module.resolve<T>(sub.type)
+            val r = subFunneler.read(module, sub.type, this)
+            endNested(label, type)
+            return r
+        }
+        Continue -> {
+            val r = funneler.read(module, type, this)
+            endNested(label, type)
+            return r
+        }
+    }
 }
 
 

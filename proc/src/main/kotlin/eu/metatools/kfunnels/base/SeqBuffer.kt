@@ -1,9 +1,6 @@
 package eu.metatools.kfunnels.base
 
-import eu.metatools.kfunnels.Event
-import eu.metatools.kfunnels.Sink
-import eu.metatools.kfunnels.Source
-import eu.metatools.kfunnels.Type
+import eu.metatools.kfunnels.*
 
 /**
  * Sink that receives items into a list. Use [reset] to get the list and reset the buffer.
@@ -25,10 +22,11 @@ class ListSink : Sink {
         list += Event.END
     }
 
-    override fun beginNested(label: String, type: Type, value: Any?) {
+    override fun beginNested(label: String, type: Type, value: Any?): Boolean {
         list += Event.BEGIN_NESTED
         if (!type.isTerminal())
             list += type.forInstance(value)
+        return true
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
@@ -118,12 +116,12 @@ class ListSource(val list: List<Any?>) : Source {
         check(advance<Event>() == Event.END)
     }
 
-    override fun beginNested(label: String, type: Type): Type {
+    override fun beginNested(label: String, type: Type): Nested {
         check(advance<Event>() == Event.BEGIN_NESTED)
         if (type.isTerminal())
-            return type
+            return Continue
         else
-            return advance()
+            return Substitute(advance())
     }
 
     override fun endNested(label: String, type: Type) {

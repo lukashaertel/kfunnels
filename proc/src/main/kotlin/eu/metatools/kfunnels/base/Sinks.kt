@@ -16,8 +16,7 @@ fun PrimitiveSink.asSeqSink() = object : Sink {
     override fun end(type: Type) {
     }
 
-    override fun beginNested(label: String, type: Type, value: Any?) {
-    }
+    override fun beginNested(label: String, type: Type, value: Any?) = true
 
     override fun endNested(label: String, type: Type, value: Any?) {
     }

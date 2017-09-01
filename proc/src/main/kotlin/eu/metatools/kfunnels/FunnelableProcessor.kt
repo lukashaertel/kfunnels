@@ -654,15 +654,14 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
             /**
              * Generates the funnelers that may be loaded statically at the start of funneling
              */
-            fun generateFunnelers() {
+            fun generateFunnelers(all: Boolean) {
                 // Write funnelers for all non-primitive mappers
                 for (t in environment.requiredTypes.distinctBy { mapper.computeType(it) }) {
                     // Do not generate funnelers for primitive types
                     if (mapper.isPrimitive(t))
                         continue
 
-                    // Do not preemptively resolve funneler for non-terminals
-                    if (!mapper.isTerminal(t))
+                    if (!all && !mapper.isTerminal(t))
                         continue
 
                     // Compute the declaration and the type
@@ -712,7 +711,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |           : $target$liftedTypeArgs = source.markAround(type) {""")
                 if (environment.isInstanitable) {
                     // Write the funnelers used by this method
-                    generateFunnelers()
+                    generateFunnelers(true)
 
                     // Handle a primary constructor that assigns properties
                     environment.withPrimaryConstructor {
@@ -738,17 +737,14 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             } else {
                                 // Get property name and funneler
                                 val name = environment.nameResolver.getString(p.name)
+                                val label = mapper.funneler(p.type)
                                 val type = mapper.computeType(p.type, true)
                                 val getter = mapper.getter(p.type)
-                                val declaration = if (p.type.hasTypeParameter())
-                                    mapper.computeBound(p.type)
-                                else
-                                    mapper.computeDeclaration(p.type, true)
 
                                 // Write the nested reading fragment
                                 writeTrimmed("""
         |
-        |       val entry$i = source.$getter<$declaration>(module, "$name", $type)""")
+        |       val entry$i = source.$getter(module, $label, "$name", $type)""")
                             }
 
                         val arguments = (0 until it.valueParameterCount).joinToString(", ") { "entry$it" }
@@ -788,6 +784,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                         } else {
                             // Get property name and funneler
                             val name = environment.nameResolver.getString(p.name)
+                            val label = mapper.funneler(p.returnType)
                             val type = mapper.computeType(p.returnType, true)
                             val getter = mapper.getter(p.returnType)
                             val declaration = if (p.returnType.hasTypeParameter())
@@ -798,7 +795,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                             // Write the nested reading fragment
                             writeTrimmed("""
         |
-        |       result.$name = source.$getter<$declaration>(module, "$name", $type)""")
+        |       result.$name = source.$getter<$declaration>(module, $label, "$name", $type)""")
                         }
 
                     writeTrimmed("""
@@ -832,7 +829,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
         |           = sink.markAround(type) {""")
 
                 // Write the funnelers used by this method, no dynamics
-                generateFunnelers()
+                generateFunnelers(false)
 
                 // Handle a primary constructor that contains properties
                 environment.withPrimaryConstructor {

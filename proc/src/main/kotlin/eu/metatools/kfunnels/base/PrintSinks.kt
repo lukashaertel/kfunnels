@@ -42,7 +42,7 @@ class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.
         withOut { "End" }
     }
 
-    override fun beginNested(label: String, type: Type, value: Any?) {
+    override fun beginNested(label: String, type: Type, value: Any?): Boolean {
         indent++
 
         val actual = type.forInstance(value)
@@ -50,6 +50,8 @@ class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.
             withOut(label) { "Begin-nested $type ($actual)" }
         else
             withOut(label) { "Begin-nested $type" }
+
+        return true
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {

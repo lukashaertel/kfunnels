@@ -106,10 +106,12 @@ object SetFunneler : Funneler<Set<Any>> {
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = HashSet<Any>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                        r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 }
             }
@@ -215,10 +217,12 @@ object SetFunneler : Funneler<Set<Any>> {
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = HashSet<Any>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                        r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 }
             }

@@ -19,7 +19,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getBoolean((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveByte -> {
@@ -27,7 +27,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getByte((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
 
@@ -36,7 +36,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getShort((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveInt -> {
@@ -44,7 +44,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getInt((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveLong -> {
@@ -52,7 +52,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getLong((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveFloat -> {
@@ -60,7 +60,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getFloat((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveDouble -> {
@@ -68,7 +68,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getDouble((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveChar -> {
@@ -76,7 +76,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getChar((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveUnit -> {
@@ -84,7 +84,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getUnit((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             Type.primitiveString -> {
@@ -92,7 +92,7 @@ object ListFunneler : Funneler<List<Any>> {
                 var p = 0
                 while (!source.isEnd())
                     r += source.getString((p++).toLabel())
-                return@markAround  r
+                return@markAround r
             }
 
             else -> {
@@ -104,13 +104,15 @@ object ListFunneler : Funneler<List<Any>> {
                     var p = 0
                     while (!source.isEnd())
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
-                    return@markAround  r
+                    return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = ArrayList<Any>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
-                    return@markAround  r
+                        r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
+                    return@markAround r
                 }
             }
         }
@@ -215,10 +217,12 @@ object ListFunneler : Funneler<List<Any>> {
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 } else {
+                    val sub = module.resolve<Any>(type.arg)
+
                     val r = ArrayList<Any>()
                     var p = 0
                     while (!source.isEnd())
-                        r += source.getDynamicNested<Any>(module, (p++).toLabel(), type.arg)
+                        r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
                     return@markAround r
                 }
             }
