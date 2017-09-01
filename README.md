@@ -130,6 +130,21 @@ fun main(args: Array<String>) {
 
     // Print the clone
     println(cloneGeneric)
+
+    // Get a map of the left item
+    val mapLeft = MapSink().let {
+        ServiceModule.std.write(it, itemLeft)
+        it.reset()
+    }
+
+    // Print the map
+    println(mapLeft)
+
+    // Read clone from map
+    val cloneLeftByMap = ServiceModule.std.read<Another>(MapSource(mapLeft))
+
+    // Print the clone
+    println(cloneLeftByMap)
 }
 ```
 
@@ -147,9 +162,19 @@ Another(i=Thing(i=1, j=3.4), s=Right(j=4.5))
 
 Container(items=[Left(i=1), Right(j=2.3), Left(i=4), null])
 
-[BEGIN, BEGIN_NESTED, java.util.Arrays.ArrayList<eu.metatools.kfunnels.tests.Some?>, BEGIN, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 1, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Right?, BEGIN, 2.3, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 4, END, END_NESTED, IS_NULL, END, END_NESTED, END]
+[BEGIN, BEGIN_NESTED, BEGIN, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 1, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Right?, BEGIN, 2.3, END, END_NESTED, IS_NOT_NULL, BEGIN_NESTED, eu.metatools.kfunnels.tests.Left?, BEGIN, 4, END, END_NESTED, IS_NULL, END, END_NESTED, END]
 
 Container(items=[Left(i=1), Right(j=2.3), Left(i=4), null])
+
+Generic(item=100)
+
+[BEGIN, BEGIN_NESTED, 100, END_NESTED, END]
+
+Generic(item=100)
+
+{s=Left(i=3), i=Thing(i=1, j=3.4)}
+
+Another(i=Thing(i=1, j=3.4), s=Left(i=3))
 ```
 
 # Define output and input
