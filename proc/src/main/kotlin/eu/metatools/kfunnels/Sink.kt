@@ -7,20 +7,28 @@ package eu.metatools.kfunnels
 interface Sink {
     /**
      * Begins writing a block.
+     * @return Return false if the no further funneling is required and unfunneling will return a [Value]
+     * @see Source.begin
+     * @see Begin
+     * @see Value
+     * @see Unfunnel
      */
-    fun begin(type: Type)
+    fun begin(type: Type, value: Any?): Boolean
 
     /**
      * Ends writing a block.
      */
-    fun end(type: Type)
+    fun end(type: Type, value: Any?)
 
 
     /**
      * Indicates nesting of the element [value] for static [type].
-     * @return Return false if the no further funneling is required and unfunneling will return a [Value]
+     * @return Return false if the no further funneling is required and unfunneling will return a [Item]
      * @see Source.beginNested
-     * @see Value
+     * @see Nested
+     * @see Item
+     * @see Substitute
+     * @see Nest
      */
     fun beginNested(label: String, type: Type, value: Any?): Boolean
 
@@ -213,20 +221,28 @@ fun Sink.putNullableString(label: String, value: String?) {
 interface SuspendSink {
     /**
      * Begins writing a block.
+     * @return Return false if the no further funneling is required and unfunneling will return a [Value]
+     * @see SuspendSource.begin
+     * @see Begin
+     * @see Value
+     * @see Unfunnel
      */
-    suspend fun begin(type: Type)
+    suspend fun begin(type: Type, value: Any?): Boolean
 
     /**
      * Ends writing a block.
      */
-    suspend fun end(type: Type)
+    suspend fun end(type: Type, value: Any?)
 
 
     /**
      * Indicates nesting of the element [value] for static [type].
-     * @return Return false if the no further funneling is required and unfunneling will return a [Value]
-     * @see Source.beginNested
-     * @see Value
+     * @return Return false if the no further funneling is required and unfunneling will return a [Item]
+     * @see SuspendSource.beginNested
+     * @see Nested
+     * @see Item
+     * @see Substitute
+     * @see Nest
      */
     suspend fun beginNested(label: String, type: Type, value: Any?): Boolean
 
@@ -530,17 +546,17 @@ suspend fun <T> SuspendSink.putNullableDynamicNested(
 /**
  * Marks beginning and ending of a [type] around the given [block].
  */
-inline fun Sink.markAround(type: Type, block: () -> Unit) {
-    begin(type)
-    block()
-    end(type)
+inline fun Sink.markAround(type: Type, value: Any?, block: () -> Unit) {
+    if (begin(type, value))
+        block()
+    end(type, value)
 }
 
 /**
  * Marks beginning and ending of a [type] around the given [block].
  */
-suspend inline fun SuspendSink.markAround(type: Type, block: () -> Unit) {
-    begin(type)
-    block()
-    end(type)
+suspend inline fun SuspendSink.markAround(type: Type, value: Any?, block: () -> Unit) {
+    if (begin(type, value))
+        block()
+    end(type, value)
 }

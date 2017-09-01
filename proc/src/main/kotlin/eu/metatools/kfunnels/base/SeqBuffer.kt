@@ -14,11 +14,12 @@ class ListSink : Sink {
         return result
     }
 
-    override fun begin(type: Type) {
+    override fun begin(type: Type, value: Any?): Boolean {
         list += Event.BEGIN
+        return true
     }
 
-    override fun end(type: Type) {
+    override fun end(type: Type, value: Any?) {
         list += Event.END
     }
 
@@ -105,8 +106,9 @@ class ListSource(val list: List<Any?>) : Source {
             return list[pos - 1]
         }
 
-    override fun begin(type: Type) {
+    override fun begin(type: Type): Begin {
         check(advance<Event>() == Event.BEGIN)
+        return Unfunnel
     }
 
     override fun isEnd() =
@@ -119,7 +121,7 @@ class ListSource(val list: List<Any?>) : Source {
     override fun beginNested(label: String, type: Type): Nested {
         check(advance<Event>() == Event.BEGIN_NESTED)
         if (type.isTerminal())
-            return Continue
+            return Nest
         else
             return Substitute(advance())
     }

@@ -13,10 +13,11 @@ class MapSink : Sink {
         return result
     }
 
-    override fun begin(type: Type) {
+    override fun begin(type: Type, value: Any?): Boolean {
+        return true
     }
 
-    override fun end(type: Type) {
+    override fun end(type: Type, value: Any?) {
     }
 
 
@@ -75,7 +76,8 @@ class MapSink : Sink {
 }
 
 class MapSource(val map: Map<String, Any?>) : Source {
-    override fun begin(type: Type) {
+    override fun begin(type: Type): Begin {
+        return Unfunnel
     }
 
     override fun isEnd(): Boolean {
@@ -86,7 +88,7 @@ class MapSource(val map: Map<String, Any?>) : Source {
     }
 
     override fun beginNested(label: String, type: Type): Nested {
-        return Value(map[label])
+        return Item(map[label])
     }
 
     override fun endNested(label: String, type: Type) {

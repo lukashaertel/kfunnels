@@ -1,6 +1,21 @@
 package eu.metatools.kfunnels
 
 /**
+ * Result of [Source.begin] and [SuspendSource.begin].
+ */
+sealed class Begin
+
+/**
+ * A value could already be determined, no unfunneling required.
+ */
+data class Value<T>(val value: T) : Begin()
+
+/**
+ * Go ahead with unfunneling as is.
+ */
+object Unfunnel : Begin()
+
+/**
  * Result of [Source.beginNested] and [SuspendSource.beginNested].
  */
 sealed class Nested
@@ -8,7 +23,7 @@ sealed class Nested
 /**
  * A value could already be determined, no further unfunneling required.
  */
-data class Value<T>(val item: T) : Nested()
+data class Item<T>(val value: T) : Nested()
 
 /**
  * Further unfunneling required, but for a different type.
@@ -18,7 +33,7 @@ data class Substitute(val type: Type) : Nested()
 /**
  * Go ahead with unfunneling as is.
  */
-object Continue : Nested()
+object Nest : Nested()
 
 /**
  * A source that provides values for a [Funneler].
@@ -27,7 +42,7 @@ interface Source {
     /**
      * Begins reading a block.
      */
-    fun begin(type: Type)
+    fun begin(type: Type): Begin
 
     /**
      * Return true if block is ending now.
@@ -205,7 +220,7 @@ interface SuspendSource {
     /**
      * Begins reading a block.
      */
-    suspend fun begin(type: Type)
+    suspend fun begin(type: Type): Begin
 
     /**
      * Return true if block is ending now.
@@ -388,12 +403,12 @@ fun <T> Source.getTerminalNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> errorSubstitutionInTerminal()
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -413,12 +428,12 @@ fun <T> Source.getNullableTerminalNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> errorSubstitutionInTerminal()
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -436,12 +451,12 @@ suspend fun <T> SuspendSource.getTerminalNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> errorSubstitutionInTerminal()
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -461,12 +476,12 @@ suspend fun <T> SuspendSource.getNullableTerminalNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> errorSubstitutionInTerminal()
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -484,9 +499,9 @@ fun <T> Source.getDynamicNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> {
             val subFunneler = module.resolve<T>(sub.type)
@@ -494,7 +509,7 @@ fun <T> Source.getDynamicNested(
             endNested(label, type)
             return r
         }
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -514,9 +529,9 @@ fun <T> Source.getNullableDynamicNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> {
             val subFunneler = module.resolve<T>(sub.type)
@@ -524,7 +539,7 @@ fun <T> Source.getNullableDynamicNested(
             endNested(label, type)
             return r
         }
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -542,9 +557,9 @@ suspend fun <T> SuspendSource.getDynamicNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> {
             val subFunneler = module.resolve<T>(sub.type)
@@ -552,7 +567,7 @@ suspend fun <T> SuspendSource.getDynamicNested(
             endNested(label, type)
             return r
         }
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -572,9 +587,9 @@ suspend fun <T> SuspendSource.getNullableDynamicNested(
 
     @Suppress("unchecked_cast")
     when (sub) {
-        is Value<*> -> {
+        is Item<*> -> {
             endNested(label, type)
-            return sub.item as T
+            return sub.value as T
         }
         is Substitute -> {
             val subFunneler = module.resolve<T>(sub.type)
@@ -582,7 +597,7 @@ suspend fun <T> SuspendSource.getNullableDynamicNested(
             endNested(label, type)
             return r
         }
-        Continue -> {
+        Nest -> {
             val r = funneler.read(module, type, this)
             endNested(label, type)
             return r
@@ -596,10 +611,20 @@ suspend fun <T> SuspendSource.getNullableDynamicNested(
  * @return Returns the block's return value
  */
 inline fun <T> Source.markAround(type: Type, block: () -> T): T {
-    begin(type)
-    val result = block()
-    end(type)
-    return result
+    val sub = begin(type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            end(type)
+            return sub.value as T
+        }
+        is Unfunnel -> {
+            val result = block()
+            end(type)
+            return result
+        }
+    }
 }
 
 /**
@@ -607,8 +632,18 @@ inline fun <T> Source.markAround(type: Type, block: () -> T): T {
  * @return Returns the block's return value
  */
 suspend inline fun <T> SuspendSource.markAround(type: Type, block: () -> T): T {
-    begin(type)
-    val result = block()
-    end(type)
-    return result
+    val sub = begin(type)
+
+    @Suppress("unchecked_cast")
+    when (sub) {
+        is Value<*> -> {
+            end(type)
+            return sub.value as T
+        }
+        is Unfunnel -> {
+            val result = block()
+            end(type)
+            return result
+        }
+    }
 }

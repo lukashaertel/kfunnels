@@ -11,7 +11,8 @@ import eu.metatools.kfunnels.*
  */
 class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
     // TODO: Check this, it's not used very often but I have the feeling it is wrong.
-    override fun read(module: Module, type: Type, source: Source): T? = source.markAround(type) {
+    override fun read(module: Module, type: Type, source: Source): T?
+            = source.markAround(type) {
         if (source.isNull(singularValueLabel))
             return@markAround null
 
@@ -19,9 +20,9 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
 
         @Suppress("unchecked_cast")
         when (sub) {
-            is Value<*> -> {
+            is Item<*> -> {
                 source.endNested(singularValueLabel, type)
-                (sub.item as T)
+                (sub.value as T)
             }
             is Substitute -> {
                 val subFunneler = module.resolve<T>(+sub.type)
@@ -29,7 +30,7 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
                 source.endNested(singularValueLabel, type)
                 r
             }
-            Continue -> {
+            Nest -> {
                 val r = of.read(module, +type, source)
                 source.endNested(singularValueLabel, type)
                 r
@@ -37,7 +38,8 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
         }
     }
 
-    override suspend fun read(module: Module, type: Type, source: SuspendSource): T? = source.markAround(type) {
+    override suspend fun read(module: Module, type: Type, source: SuspendSource): T?
+            = source.markAround(type) {
         if (source.isNull(singularValueLabel))
             return@markAround null
 
@@ -45,9 +47,9 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
 
         @Suppress("unchecked_cast")
         when (sub) {
-            is Value<*> -> {
+            is Item<*> -> {
                 source.endNested(singularValueLabel, type)
-                (sub.item as T)
+                (sub.value as T)
             }
             is Substitute -> {
                 val subFunneler = module.resolve<T>(+sub.type)
@@ -55,7 +57,7 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
                 source.endNested(singularValueLabel, type)
                 r
             }
-            Continue -> {
+            Nest -> {
                 val r = of.read(module, +type, source)
                 source.endNested(singularValueLabel, type)
                 r
@@ -63,7 +65,8 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
         }
     }
 
-    override fun write(module: Module, type: Type, sink: Sink, item: T?) = sink.markAround(type) {
+    override fun write(module: Module, type: Type, sink: Sink, item: T?)
+            = sink.markAround(type, item) {
         if (item == null) {
             sink.putNull(singularValueLabel, true)
             return@markAround
@@ -75,7 +78,8 @@ class NullableFunneler<T>(val of: Funneler<T>) : Funneler<T?> {
         sink.endNested(singularValueLabel, type, item)
     }
 
-    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: T?) = sink.markAround(type) {
+    override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: T?)
+            = sink.markAround(type, item) {
         if (item == null) {
             sink.putNull(singularValueLabel, true)
             return@markAround

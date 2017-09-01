@@ -10,10 +10,11 @@ import kotlin.reflect.full.isSubclassOf
  * Wraps the [PrimitiveSink] as a [Sink].
  */
 fun PrimitiveSink.asSeqSink() = object : Sink {
-    override fun begin(type: Type) {
+    override fun begin(type: Type, value: Any?): Boolean {
+        return true
     }
 
-    override fun end(type: Type) {
+    override fun end(type: Type, value: Any?) {
     }
 
     override fun beginNested(label: String, type: Type, value: Any?) = true

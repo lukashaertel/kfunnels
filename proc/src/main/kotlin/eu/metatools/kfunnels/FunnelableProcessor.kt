@@ -826,7 +826,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 writeTrimmed("""
         |
         |   override $funSuspend fun write(module: Module, type: Type, sink: ${pivotSuspend}Sink, item: $target$liftedTypeArgs)
-        |           = sink.markAround(type) {""")
+        |           = sink.markAround(type, item) {""")
 
                 // Write the funnelers used by this method, no dynamics
                 generateFunnelers(false)

@@ -1,7 +1,9 @@
 package eu.metatools.kfunnels.base
 
+import eu.metatools.kfunnels.Begin
 import eu.metatools.kfunnels.Sink
 import eu.metatools.kfunnels.Type
+import eu.metatools.kfunnels.Unfunnel
 import java.io.PrintStream
 
 /**
@@ -34,11 +36,12 @@ class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.
         printStream.println(prefix + label + ": " + text.replace(Regex("\r?\n")) { it.value + prefix })
     }
 
-    override fun begin(type: Type) {
+    override fun begin(type: Type, value: Any?): Boolean {
         withOut { "Begin $type" }
+        return true
     }
 
-    override fun end(type: Type) {
+    override fun end(type: Type, value: Any?) {
         withOut { "End" }
     }
 

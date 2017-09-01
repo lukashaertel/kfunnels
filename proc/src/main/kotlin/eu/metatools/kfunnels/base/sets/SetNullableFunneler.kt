@@ -230,7 +230,7 @@ object SetNullableFunneler : Funneler<Set<Any?>> {
     }
 
     override fun write(module: Module, type: Type, sink: Sink, item: Set<Any?>)
-            = sink.markAround(type) {
+            = sink.markAround(type, item) {
 
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
@@ -292,7 +292,7 @@ object SetNullableFunneler : Funneler<Set<Any?>> {
     }
 
     override suspend fun write(module: Module, type: Type, sink: SuspendSink, item: Set<Any?>)
-            = sink.markAround(type) {
+            = sink.markAround(type, item) {
 
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
