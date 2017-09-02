@@ -7,6 +7,7 @@ import eu.metatools.kfunnels.base.lists.ListFunneler
 import eu.metatools.kfunnels.base.lists.ListNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
+import eu.metatools.kfunnels.base.tuples.*
 import java.util.*
 import kotlin.reflect.full.isSubclassOf
 
@@ -47,6 +48,18 @@ object StdlibModule : Module {
 
             Type.primitiveString ->
                 return StringFunneler as Funneler<T>
+        }
+
+        // Handle tuples
+        @Suppress("unchecked_cast")
+        when (type.kClass) {
+            Pair::class -> when (type.key.nullable to type.value.nullable) {
+                false to false -> return PairFunneler as Funneler<T>
+                true to false -> return PairFirstNullableFunneler as Funneler<T>
+                false to true -> return PairSecondNullableFunneler as Funneler<T>
+                true to true -> return PairNullableFunneler as Funneler<T>
+            }
+            Triple::class -> return TripleFunneler as Funneler<T>
         }
 
         // Handle any enum type

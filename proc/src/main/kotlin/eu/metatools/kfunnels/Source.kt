@@ -395,6 +395,48 @@ private fun errorSubstitutionInTerminal(): Nothing {
 }
 
 /**
+ * Gets a nested value.
+ */
+fun <T> Source.getNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type) =
+        if (type.isTerminal())
+            getTerminalNested(module, funneler, label, type)
+        else
+            getDynamicNested(module, funneler, label, type)
+
+
+/**
+ * Gets a nested value.
+ */
+suspend fun <T> SuspendSource.getNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type) =
+        if (type.isTerminal())
+            getTerminalNested(module, funneler, label, type)
+        else
+            getDynamicNested(module, funneler, label, type)
+
+/**
+ * Gets a nullable nested value.
+ */
+fun <T> Source.getNullableNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type) =
+        if (type.isTerminal())
+            getNullableTerminalNested(module, funneler, label, type)
+        else
+            getNullableDynamicNested(module, funneler, label, type)
+
+
+/**
+ * Gets a nullable nested value.
+ */
+suspend fun <T> SuspendSource.getNullableNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type) =
+        if (type.isTerminal())
+            getNullableTerminalNested(module, funneler, label, type)
+        else
+            getNullableDynamicNested(module, funneler, label, type)
+
+/**
  * Gets a nested value for a terminal type.
  */
 fun <T> Source.getTerminalNested(

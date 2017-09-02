@@ -432,6 +432,47 @@ suspend fun SuspendSink.putNullableString(label: String, value: String?) {
 /**
  * Puts a nested value for a type.
  */
+fun <T> Sink.putNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T) =
+        if (type.isTerminal())
+            putTerminalNested(module, funneler, label, type, value)
+        else
+            putDynamicNested(module, label, type, value)
+
+/**
+ * Puts a nested value for a type.
+ */
+suspend fun <T> SuspendSink.putNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T) =
+        if (type.isTerminal())
+            putTerminalNested(module, funneler, label, type, value)
+        else
+            putDynamicNested(module, label, type, value)
+
+/**
+ * Puts a nested value for a type.
+ */
+fun <T> Sink.putNullableNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T?) =
+        if (type.isTerminal())
+            putNullableTerminalNested(module, funneler, label, type, value)
+        else
+            putNullableDynamicNested(module, label, type, value)
+
+/**
+ * Puts a nested value for a type.
+ */
+suspend fun <T> SuspendSink.putNullableNested(
+        module: Module, funneler: Funneler<T>, label: String, type: Type, value: T?) =
+        if (type.isTerminal())
+            putNullableTerminalNested(module, funneler, label, type, value)
+        else
+            putNullableDynamicNested(module, label, type, value)
+
+
+/**
+ * Puts a nested value for a type.
+ */
 fun <T> Sink.putTerminalNested(
         module: Module, funneler: Funneler<T>, label: String, type: Type, value: T) {
     if (beginNested(label, type, value))

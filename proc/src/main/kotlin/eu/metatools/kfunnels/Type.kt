@@ -208,6 +208,13 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
                 Type(any.javaClass.kotlin, nullable, args)
 
     /**
+     * Transforms the argument at the given position
+     */
+    inline fun mapArg(arg: Int, block: (Type) -> Type) =
+            Type(kClass, nullable,
+                    args.subList(0, arg) + block(args[arg]) + args.subList(arg + 1, args.size))
+
+    /**
      * Maps to a new type where the [arg] is nullable.
      */
     fun argNullable() = Type(kClass, nullable, listOf(-arg))

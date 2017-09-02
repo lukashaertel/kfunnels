@@ -133,4 +133,8 @@ fun main(args: Array<String>) {
 
     // Print the clone
     println(cloneLeftByMap)
+
+    // Print the hash of the container
+    println(container.hash())
+
 }

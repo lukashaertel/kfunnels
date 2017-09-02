@@ -559,7 +559,7 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     typeElement.modifiers.contains(Modifier.FINAL)
                 ElementKind.ENUM -> true
                 ElementKind.INTERFACE -> false
-                else -> error { "Cannot determine if $canonicalName is terminal." }
+                else -> false ?: error { "Cannot determine if $canonicalName is terminal." }
             }
         }
 

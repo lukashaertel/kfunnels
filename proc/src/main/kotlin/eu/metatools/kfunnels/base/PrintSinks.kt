@@ -21,7 +21,7 @@ class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.
         /**
          * A default instance where labels are *not* used and the standard output is the target.
          */
-        val sequence = PrintSink(true)
+        val sequence = PrintSink(false)
     }
 
     private inline fun withOut(block: () -> Any?) {
@@ -33,33 +33,41 @@ class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.
     private inline fun withOut(label: String, block: () -> Any?) {
         val prefix = "\t".repeat(indent)
         val text = block().toString()
-        printStream.println(prefix + label + ": " + text.replace(Regex("\r?\n")) { it.value + prefix })
+
+        printStream.print(prefix)
+        if (printLables) {
+            printStream.print(label)
+            printStream.print(": ")
+        }
+        printStream.println(text.replace(Regex("\r?\n")) { it.value + prefix })
     }
 
     override fun begin(type: Type, value: Any?): Boolean {
         withOut { "Begin $type" }
+        indent++
         return true
     }
 
     override fun end(type: Type, value: Any?) {
+        indent--
         withOut { "End" }
     }
 
     override fun beginNested(label: String, type: Type, value: Any?): Boolean {
-        indent++
 
         val actual = type.forInstance(value)
         if (actual != type)
             withOut(label) { "Begin-nested $type ($actual)" }
         else
             withOut(label) { "Begin-nested $type" }
+        indent++
 
         return true
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
-        withOut(label) { "End-nested" }
         indent--
+        withOut(label) { "End-nested" }
     }
 
     override fun putBoolean(label: String, value: Boolean) {
