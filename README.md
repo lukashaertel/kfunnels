@@ -145,6 +145,10 @@ fun main(args: Array<String>) {
 
     // Print the clone
     println(cloneLeftByMap)
+
+    // Print the hash of the container
+    println(container.hash())
+
 }
 ```
 
@@ -175,6 +179,8 @@ Generic(item=100)
 {s=Left(i=3), i=Thing(i=1, j=3.4)}
 
 Another(i=Thing(i=1, j=3.4), s=Left(i=3))
+
+-2011054348
 ```
 
 # Define output and input
