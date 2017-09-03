@@ -1,8 +1,31 @@
 package eu.metatools.kfunnels.base.lists
 
 import eu.metatools.kfunnels.*
+import java.util.*
 
-object ListNullableFunneler : Funneler<List<Any?>> {
+class ListNullableFunneler(val create: () -> MutableList<Any?>) : Funneler<List<Any?>> {
+    companion object {
+        /**
+         * List funneler for array lists.
+         */
+        val forArrayList = ListNullableFunneler(::ArrayList)
+
+        /**
+         * List funneler for linked lists.
+         */
+        val forLinkedList = ListNullableFunneler(::LinkedList)
+
+        /**
+         * List funneler for stacks.
+         */
+        val forStack = ListNullableFunneler(::Stack)
+
+        /**
+         * List funneler for vectors.
+         */
+        val forVector = ListNullableFunneler(::Vector)
+    }
+
     /**
      * Computes the positional label for an item.
      */
@@ -15,7 +38,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
-                val r = ArrayList<Boolean?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableBoolean((p++).toLabel())
@@ -23,7 +47,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveByte -> {
-                val r = ArrayList<Byte?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableByte((p++).toLabel())
@@ -32,7 +57,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
 
 
             Type.primitiveShort -> {
-                val r = ArrayList<Short?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableShort((p++).toLabel())
@@ -40,7 +66,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveInt -> {
-                val r = ArrayList<Int?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableInt((p++).toLabel())
@@ -48,7 +75,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveLong -> {
-                val r = ArrayList<Long?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableLong((p++).toLabel())
@@ -56,7 +84,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveFloat -> {
-                val r = ArrayList<Float?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableFloat((p++).toLabel())
@@ -64,7 +93,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveDouble -> {
-                val r = ArrayList<Double?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableDouble((p++).toLabel())
@@ -72,7 +102,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveChar -> {
-                val r = ArrayList<Char?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableChar((p++).toLabel())
@@ -80,7 +111,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveUnit -> {
-                val r = ArrayList<Unit?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableUnit((p++).toLabel())
@@ -88,7 +120,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveString -> {
-                val r = ArrayList<String?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableString((p++).toLabel())
@@ -100,7 +133,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                     // Resolve element funneler for terminal type
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = ArrayList<Any?>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg)
@@ -108,7 +142,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                 } else {
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = ArrayList<Any?>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getNullableDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
@@ -126,7 +161,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
-                val r = ArrayList<Boolean?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableBoolean((p++).toLabel())
@@ -134,7 +170,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveByte -> {
-                val r = ArrayList<Byte?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableByte((p++).toLabel())
@@ -143,7 +180,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
 
 
             Type.primitiveShort -> {
-                val r = ArrayList<Short?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableShort((p++).toLabel())
@@ -151,7 +189,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveInt -> {
-                val r = ArrayList<Int?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableInt((p++).toLabel())
@@ -159,7 +198,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveLong -> {
-                val r = ArrayList<Long?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableLong((p++).toLabel())
@@ -167,7 +207,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveFloat -> {
-                val r = ArrayList<Float?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableFloat((p++).toLabel())
@@ -175,7 +216,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveDouble -> {
-                val r = ArrayList<Double?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableDouble((p++).toLabel())
@@ -183,7 +225,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveChar -> {
-                val r = ArrayList<Char?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableChar((p++).toLabel())
@@ -191,7 +234,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveUnit -> {
-                val r = ArrayList<Unit?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableUnit((p++).toLabel())
@@ -199,7 +243,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
             }
 
             Type.primitiveString -> {
-                val r = ArrayList<String?>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getNullableString((p++).toLabel())
@@ -211,7 +256,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                     // Resolve element funneler for terminal type
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = ArrayList<Any?>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg)
@@ -219,7 +265,8 @@ object ListNullableFunneler : Funneler<List<Any?>> {
                 } else {
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = ArrayList<Any?>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getNullableDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)

@@ -19,6 +19,7 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18"
+    compile "net.java.openjfx.backport:openjfx-78-backport:1.8.0-ea-b96.1"
 
     compile project(":proc")
     kapt project(":proc")

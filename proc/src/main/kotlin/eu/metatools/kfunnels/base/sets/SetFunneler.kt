@@ -2,7 +2,19 @@ package eu.metatools.kfunnels.base.sets
 
 import eu.metatools.kfunnels.*
 
-object SetFunneler : Funneler<Set<Any>> {
+class SetFunneler(val create: () -> MutableSet<Any>) : Funneler<Set<Any>> {
+    companion object {
+        /**
+         * Set funneler for hash sets.
+         */
+        val forHashSet = SetFunneler(::HashSet)
+
+        /**
+         * Set funneler for linked hash sets.
+         */
+        val forLinkedHashSet = SetFunneler(::LinkedHashSet)
+    }
+
     /**
      * Computes the positional label for an item.
      */
@@ -15,7 +27,8 @@ object SetFunneler : Funneler<Set<Any>> {
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
-                val r = HashSet<Boolean>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getBoolean((p++).toLabel())
@@ -23,7 +36,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveByte -> {
-                val r = HashSet<Byte>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getByte((p++).toLabel())
@@ -32,7 +46,8 @@ object SetFunneler : Funneler<Set<Any>> {
 
 
             Type.primitiveShort -> {
-                val r = HashSet<Short>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getShort((p++).toLabel())
@@ -40,7 +55,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveInt -> {
-                val r = HashSet<Int>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getInt((p++).toLabel())
@@ -48,7 +64,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveLong -> {
-                val r = HashSet<Long>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getLong((p++).toLabel())
@@ -56,7 +73,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveFloat -> {
-                val r = HashSet<Float>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getFloat((p++).toLabel())
@@ -64,7 +82,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveDouble -> {
-                val r = HashSet<Double>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getDouble((p++).toLabel())
@@ -72,7 +91,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveChar -> {
-                val r = HashSet<Char>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getChar((p++).toLabel())
@@ -80,7 +100,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveUnit -> {
-                val r = HashSet<Unit>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getUnit((p++).toLabel())
@@ -88,7 +109,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveString -> {
-                val r = HashSet<String>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getString((p++).toLabel())
@@ -100,7 +122,8 @@ object SetFunneler : Funneler<Set<Any>> {
                     // Resolve element funneler for terminal type
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = HashSet<Any>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
@@ -108,7 +131,8 @@ object SetFunneler : Funneler<Set<Any>> {
                 } else {
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = HashSet<Any>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)
@@ -126,7 +150,8 @@ object SetFunneler : Funneler<Set<Any>> {
         @Suppress("unchecked_cast")
         when (type.arg.primitiveCode) {
             Type.primitiveBoolean -> {
-                val r = HashSet<Boolean>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getBoolean((p++).toLabel())
@@ -134,7 +159,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveByte -> {
-                val r = HashSet<Byte>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getByte((p++).toLabel())
@@ -143,7 +169,8 @@ object SetFunneler : Funneler<Set<Any>> {
 
 
             Type.primitiveShort -> {
-                val r = HashSet<Short>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getShort((p++).toLabel())
@@ -151,7 +178,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveInt -> {
-                val r = HashSet<Int>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getInt((p++).toLabel())
@@ -159,7 +187,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveLong -> {
-                val r = HashSet<Long>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getLong((p++).toLabel())
@@ -167,7 +196,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveFloat -> {
-                val r = HashSet<Float>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getFloat((p++).toLabel())
@@ -175,7 +205,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveDouble -> {
-                val r = HashSet<Double>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getDouble((p++).toLabel())
@@ -183,7 +214,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveChar -> {
-                val r = HashSet<Char>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getChar((p++).toLabel())
@@ -191,7 +223,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveUnit -> {
-                val r = HashSet<Unit>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getUnit((p++).toLabel())
@@ -199,7 +232,8 @@ object SetFunneler : Funneler<Set<Any>> {
             }
 
             Type.primitiveString -> {
-                val r = HashSet<String>()
+                val r = create()
+                source.afterCreate(r)
                 var p = 0
                 while (!source.isEnd())
                     r += source.getString((p++).toLabel())
@@ -211,7 +245,8 @@ object SetFunneler : Funneler<Set<Any>> {
                     // Resolve element funneler for terminal type
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = HashSet<Any>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getTerminalNested(module, sub, (p++).toLabel(), type.arg)
@@ -219,7 +254,8 @@ object SetFunneler : Funneler<Set<Any>> {
                 } else {
                     val sub = module.resolve<Any>(type.arg)
 
-                    val r = HashSet<Any>()
+                    val r = create()
+                    source.afterCreate(r)
                     var p = 0
                     while (!source.isEnd())
                         r += source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg)

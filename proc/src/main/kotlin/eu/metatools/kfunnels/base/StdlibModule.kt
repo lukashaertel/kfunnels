@@ -9,6 +9,8 @@ import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import eu.metatools.kfunnels.base.tuples.*
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashSet
 import kotlin.reflect.full.isSubclassOf
 
 /**
@@ -76,9 +78,27 @@ object StdlibModule : Module {
             Collection::class,
             List::class ->
                 if (type.arg.nullable)
-                    return ListNullableFunneler as Funneler<T>
+                    return ListNullableFunneler.forArrayList as Funneler<T>
                 else
-                    return ListFunneler as Funneler<T>
+                    return ListFunneler.forArrayList as Funneler<T>
+
+            LinkedList::class ->
+                if (type.arg.nullable)
+                    return ListNullableFunneler.forLinkedList as Funneler<T>
+                else
+                    return ListFunneler.forLinkedList as Funneler<T>
+
+            Vector::class ->
+                if (type.arg.nullable)
+                    return ListNullableFunneler.forVector as Funneler<T>
+                else
+                    return ListFunneler.forVector as Funneler<T>
+
+            Stack::class ->
+                if (type.arg.nullable)
+                    return ListNullableFunneler.forStack as Funneler<T>
+                else
+                    return ListFunneler.forStack as Funneler<T>
         }
 
 
@@ -90,9 +110,15 @@ object StdlibModule : Module {
             HashSet::class,
             Set::class ->
                 if (type.arg.nullable)
-                    return SetNullableFunneler as Funneler<T>
+                    return SetNullableFunneler.forHashSet as Funneler<T>
                 else
-                    return SetFunneler as Funneler<T>
+                    return SetFunneler.forHashSet as Funneler<T>
+
+            LinkedHashSet::class ->
+                if (type.arg.nullable)
+                    return SetNullableFunneler.forLinkedHashSet as Funneler<T>
+                else
+                    return SetFunneler.forLinkedHashSet as Funneler<T>
         }
 
         @Suppress("unchecked_cast")

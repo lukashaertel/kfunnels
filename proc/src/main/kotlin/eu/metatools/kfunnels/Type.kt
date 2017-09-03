@@ -215,6 +215,12 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
                     args.subList(0, arg) + block(args[arg]) + args.subList(arg + 1, args.size))
 
     /**
+     * Recursively substitutes a type.
+     */
+    fun sub(original: KClass<*>, with: KClass<*>): Type =
+            Type(if (kClass == original) with else kClass, nullable, args.map { it.sub(original, with) })
+
+    /**
      * Maps to a new type where the [arg] is nullable.
      */
     fun argNullable() = Type(kClass, nullable, listOf(-arg))

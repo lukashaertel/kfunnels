@@ -33,7 +33,7 @@ fun main(args: Array<String>) = runBlocking {
     // Start a job that reads the item
     val second = launch(CommonPool) {
         val receivedItem = ServiceModule.std.read<Another>(source)
-        println("Received $receivedItem  in second job")
+        println("Received $receivedItem in second job")
 
         val receivedList = ServiceModule.std.read<List<Int>>(source)
         println("Received $receivedList in second job")
