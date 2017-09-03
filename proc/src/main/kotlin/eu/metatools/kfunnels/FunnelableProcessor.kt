@@ -559,34 +559,10 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     typeElement.modifiers.contains(Modifier.FINAL)
                 ElementKind.ENUM -> true
                 ElementKind.INTERFACE -> false
-                else -> false ?: error { "Cannot determine if $canonicalName is terminal." }
-            }
-        }
-
-        fun isTerminal2(type: ProtoBuf.Type): Boolean {
-            // TODO: This information is not present in the metadata
-            if (type.hasTypeParameter())
-                return false
-
-            return when (Flags.CLASS_KIND[type.flags]) {
-                ProtoBuf.Class.Kind.CLASS ->
-                    when (Flags.MODALITY[type.flags]) {
-                        null,
-                        ProtoBuf.Modality.ABSTRACT,
-                        ProtoBuf.Modality.OPEN,
-                        ProtoBuf.Modality.SEALED -> false
-
-                        ProtoBuf.Modality.FINAL -> true
-                    }
-
-                null,
-                ProtoBuf.Class.Kind.INTERFACE -> false
-
-                ProtoBuf.Class.Kind.ENUM_CLASS,
-                ProtoBuf.Class.Kind.ENUM_ENTRY,
-                ProtoBuf.Class.Kind.ANNOTATION_CLASS,
-                ProtoBuf.Class.Kind.OBJECT,
-                ProtoBuf.Class.Kind.COMPANION_OBJECT -> true
+                else -> {
+                    warn { "Cannot determine if $canonicalName is terminal. Assuming mutable." }
+                    false
+                }
             }
         }
 
@@ -751,7 +727,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
 
                         writeTrimmed("""
         |
-        |       val result = $target($arguments)""")
+        |       val result = $target($arguments)
+        |       source.afterCreate(result)""")
 
                     }
 
@@ -759,7 +736,8 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                     if (environment.primaryConstructor == null) {
                         writeTrimmed("""
         |
-        |       val result = $target()""")
+        |       val result = $target()
+        |       source.afterCreate(result)""")
                     }
 
                     for (p in environment.postVariables)

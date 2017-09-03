@@ -12,8 +12,9 @@ import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking {
-    // Make an item to send
+    // Make some items to send
     val item = Another(Thing(1, 3.4f), Right(4.5f))
+    val list = (1..100).toList()
 
     // Make a channel to read from and write to
     val channel = Channel<Any?>()
@@ -24,12 +25,20 @@ fun main(args: Array<String>) = runBlocking {
     val first = launch(CommonPool) {
         println("Writing $item from first job")
         ServiceModule.std.write(sink, item)
+
+        println("Writing $list from first job")
+        ServiceModule.std.write(sink, list)
     }
+
+    // TODO: Problems here
 
     // Start a job that reads the item
     val second = launch(CommonPool) {
-        val received = ServiceModule.std.read<Another>(source)
-        println("Received $received in second job")
+        val receivedItem = ServiceModule.std.read<Another>(source)
+        println("Received $receivedItem  in second job")
+
+        val receivedList = ServiceModule.std.read<List<Int>>(source)
+        println("Received $receivedList in second job")
     }
 
     // Await both jobs

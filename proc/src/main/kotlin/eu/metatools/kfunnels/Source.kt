@@ -56,6 +56,12 @@ interface Source {
 
 
     /**
+     * Called when the item is created and only mutable values are left to unfunnel.
+     */
+    fun afterCreate(item: Any?) {}
+
+
+    /**
      * Enters the nesting of a new element for static [type]. May return a substitute type.
      */
     fun beginNested(label: String, type: Type): Nested
@@ -231,6 +237,12 @@ interface SuspendSource {
      * Ends reading a block.
      */
     suspend fun end(type: Type)
+
+
+    /**
+     * Called when the item is created and only mutable values are left to unfunnel.
+     */
+    suspend fun afterCreate(item: Any?) {}
 
 
     /**
