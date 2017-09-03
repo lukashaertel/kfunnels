@@ -1,5 +1,6 @@
 package eu.metatools.kfunnels.base
 
+import com.google.common.base.Optional
 import eu.metatools.kfunnels.*
 import kotlinx.coroutines.experimental.channels.Channel
 
@@ -74,65 +75,83 @@ class ChannelSink(val channel: Channel<Any?>) : SuspendSink {
 }
 
 class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
+    private var state = Optional.absent<Any?>()
+
+    private suspend fun prepareNext() {
+        if (!state.isPresent)
+            state = Optional.of(channel.receive())
+    }
+
+    private suspend fun takeNext(): Any? {
+        prepareNext()
+        val result = state.get()
+        state = Optional.absent()
+        return result
+    }
+
+    private suspend fun peekNext(): Any? {
+        prepareNext()
+        return state.get()
+    }
 
     override suspend fun begin(type: Type): Begin {
-        check(channel.receive() == Event.BEGIN)
+        check(takeNext() == Event.BEGIN)
         return Unfunnel
     }
 
     override suspend fun isEnd() =
-            channel.receive() == Event.END
+            peekNext() == Event.END
 
     override suspend fun end(type: Type) {
-        check(channel.receive() == Event.END)
+        check(takeNext() == Event.END)
     }
 
     override suspend fun beginNested(label: String, type: Type): Nested {
-        check(channel.receive() == Event.BEGIN_NESTED)
+        check(takeNext() == Event.BEGIN_NESTED)
         if (type.isTerminal())
             return Nest
         else
-            return Substitute(channel.receive() as Type)
+            return Substitute(takeNext() as Type)
     }
 
     override suspend fun endNested(label: String, type: Type) {
-        check(channel.receive() == Event.END_NESTED)
+        check(takeNext() == Event.END_NESTED)
     }
 
     override suspend fun getBoolean(label: String): Boolean =
-            channel.receive() as Boolean
+            takeNext() as Boolean
 
     override suspend fun getByte(label: String): Byte =
-            channel.receive() as Byte
+            takeNext() as Byte
 
     override suspend fun getShort(label: String): Short =
-            channel.receive() as Short
+            takeNext() as Short
 
     override suspend fun getInt(label: String): Int =
-            channel.receive() as Int
+            takeNext() as Int
 
     override suspend fun getLong(label: String): Long =
-            channel.receive() as Long
+            takeNext() as Long
 
     override suspend fun getFloat(label: String): Float =
-            channel.receive() as Float
+            takeNext() as Float
 
     override suspend fun getDouble(label: String): Double =
-            channel.receive() as Double
+            takeNext() as Double
 
     override suspend fun getChar(label: String): Char =
-            channel.receive() as Char
+            takeNext() as Char
 
     override suspend fun isNull(label: String): Boolean =
-            when (channel.receive()) {
+            when (takeNext()) {
                 Event.IS_NULL -> true
                 Event.IS_NOT_NULL -> false
                 else -> error("Not at a valid token.")
             }
 
     override suspend fun getUnit(label: String) =
-            channel.receive() as Unit
+            takeNext() as Unit
 
     override suspend fun getString(label: String): String =
-            channel.receive() as String
+            takeNext() as String
 }

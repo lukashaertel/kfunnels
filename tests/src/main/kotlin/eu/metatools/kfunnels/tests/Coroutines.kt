@@ -30,8 +30,6 @@ fun main(args: Array<String>) = runBlocking {
         ServiceModule.std.write(sink, list)
     }
 
-    // TODO: Problems here
-
     // Start a job that reads the item
     val second = launch(CommonPool) {
         val receivedItem = ServiceModule.std.read<Another>(source)
