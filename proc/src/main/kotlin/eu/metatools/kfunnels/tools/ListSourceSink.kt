@@ -1,4 +1,4 @@
-package eu.metatools.kfunnels.base
+package eu.metatools.kfunnels.tools
 
 import eu.metatools.kfunnels.*
 
@@ -8,6 +8,9 @@ import eu.metatools.kfunnels.*
 class ListSink : Sink {
     private val list = arrayListOf<Any?>()
 
+    /**
+     * Gets and resets the current list.
+     */
     fun reset(): List<Any?> {
         val result = list.toList()
         list.clear()

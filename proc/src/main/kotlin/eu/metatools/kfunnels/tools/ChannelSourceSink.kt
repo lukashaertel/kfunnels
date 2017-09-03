@@ -1,9 +1,12 @@
-package eu.metatools.kfunnels.base
+package eu.metatools.kfunnels.tools
 
 import com.google.common.base.Optional
 import eu.metatools.kfunnels.*
 import kotlinx.coroutines.experimental.channels.Channel
 
+/**
+ * Streams the items into the channel using [Channel.send].
+ */
 class ChannelSink(val channel: Channel<Any?>) : SuspendSink {
 
     override suspend fun begin(type: Type, value: Any?): Boolean {
@@ -74,14 +77,26 @@ class ChannelSink(val channel: Channel<Any?>) : SuspendSink {
     }
 }
 
+/**
+ * Receives items from the channel using [Channel.receive].
+ */
 class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
+    /**
+     * The element that was peeked last or absent.
+     */
     private var state = Optional.absent<Any?>()
 
+    /**
+     * Prepare the state, i.e., read an item into [state] if none present.
+     */
     private suspend fun prepareNext() {
         if (!state.isPresent)
             state = Optional.of(channel.receive())
     }
 
+    /**
+     * Takes the next item, leaves the state empty.
+     */
     private suspend fun takeNext(): Any? {
         prepareNext()
         val result = state.get()
@@ -89,6 +104,9 @@ class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
         return result
     }
 
+    /**
+     * Peeks the next item, leaves the state with the item.
+     */
     private suspend fun peekNext(): Any? {
         prepareNext()
         return state.get()

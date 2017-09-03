@@ -1,7 +1,7 @@
 package eu.metatools.kfunnels.tests
 
-import eu.metatools.kfunnels.base.ChannelSink
-import eu.metatools.kfunnels.base.ChannelSource
+import eu.metatools.kfunnels.tools.ChannelSink
+import eu.metatools.kfunnels.tools.ChannelSource
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.read
 import eu.metatools.kfunnels.std

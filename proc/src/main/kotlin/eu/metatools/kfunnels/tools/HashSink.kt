@@ -1,7 +1,8 @@
-package eu.metatools.kfunnels.base
+package eu.metatools.kfunnels.tools
 
 import eu.metatools.kfunnels.Sink
 import eu.metatools.kfunnels.Type
+import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.std
 import eu.metatools.kfunnels.write
 

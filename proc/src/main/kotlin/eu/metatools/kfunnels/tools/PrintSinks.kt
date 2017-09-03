@@ -1,13 +1,11 @@
-package eu.metatools.kfunnels.base
+package eu.metatools.kfunnels.tools
 
-import eu.metatools.kfunnels.Begin
 import eu.metatools.kfunnels.Sink
 import eu.metatools.kfunnels.Type
-import eu.metatools.kfunnels.Unfunnel
 import java.io.PrintStream
 
 /**
- * Pipes the calls into the standard output.
+ * Pipes the calls into the [printStream]. Shows lables if [printLables] is true.
  */
 class PrintSink(val printLables: Boolean, val printStream: PrintStream = System.out) : Sink {
     private var indent = 0

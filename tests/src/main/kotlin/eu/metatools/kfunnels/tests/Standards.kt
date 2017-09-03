@@ -1,6 +1,6 @@
 package eu.metatools.kfunnels.tests
 
-import eu.metatools.kfunnels.base.PrintSink
+import eu.metatools.kfunnels.tools.PrintSink
 import eu.metatools.kfunnels.base.StdlibModule
 import eu.metatools.kfunnels.write
 

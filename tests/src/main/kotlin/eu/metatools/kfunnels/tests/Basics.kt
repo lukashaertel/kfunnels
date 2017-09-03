@@ -2,6 +2,7 @@ package eu.metatools.kfunnels.tests
 
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.*
+import eu.metatools.kfunnels.tools.*
 
 /**
  * A simple thing, it is completely terminal

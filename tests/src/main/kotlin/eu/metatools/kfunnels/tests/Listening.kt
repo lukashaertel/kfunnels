@@ -6,8 +6,9 @@ import eu.metatools.kfunnels.base.lists.ListFunneler
 import eu.metatools.kfunnels.base.lists.ListNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
+import eu.metatools.kfunnels.tools.ListSink
+import eu.metatools.kfunnels.tools.ListSource
 import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.ObservableList
 import javafx.collections.ObservableSet
