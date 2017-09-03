@@ -3,16 +3,13 @@ package eu.metatools.kfunnels.tools
 import eu.metatools.kfunnels.*
 
 /**
- * Stores the elements in a map using their labels. Use [reset] to get the map and reset the buffer.
+ * Stores the elements in a map using their labels.
  */
 class MapSink : Sink {
     private val NULL = Any()
 
     private val mutableMap = hashMapOf<String, Any?>()
 
-    /**
-     * Gets and resets the current map.
-     */
     fun reset(): Map<String, Any?> {
         val result = mutableMap.filterValues { it != NULL }
         mutableMap.clear()
@@ -81,9 +78,6 @@ class MapSink : Sink {
     }
 }
 
-/**
- * Source that provides elements from the [map], use [MapSink] to create it.
- */
 class MapSource(val map: Map<String, Any?>) : Source {
     override fun begin(type: Type): Begin {
         return Unfunnel

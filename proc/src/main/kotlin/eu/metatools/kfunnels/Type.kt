@@ -1,11 +1,14 @@
 package eu.metatools.kfunnels
 
 import com.google.common.reflect.TypeToken
+import eu.metatools.kfunnels.utils.kClassFor
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.WildcardType
 import java.util.*
+import java.util.regex.Pattern
 import kotlin.reflect.KClass
+import kotlin.*
 
 /**
  * Represents a type with actual arguments.
@@ -163,6 +166,112 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
          */
         inline fun <reified T> from() =
                 from(object : TypeToken<T>() {}.type)
+
+        /**
+         * Parses the type from the string.
+         */
+        fun parse(string: String): Type {
+            /**
+             * Position of the parser.
+             */
+            var pos = 0
+
+            /**
+             * Reads skips whitespaces.
+             */
+            fun ws() {
+                while (pos in string.indices)
+                    if (string[pos].isWhitespace())
+                        pos++
+                    else
+                        break
+            }
+
+            /**
+             * Returns true and advances if currently at the given character, otherwise remains at the current position.
+             */
+            fun chr(char: Char): Boolean {
+                if (pos !in string.indices)
+                    return false
+
+                if (string[pos] != char)
+                    return false
+
+                pos++
+                return true
+            }
+
+            /**
+             * Parses a name fragment.
+             */
+            fun name(): String {
+                var name = ""
+                while (pos in string.indices) {
+                    val c = string[pos]
+                    if (!c.isLetter())
+                        return name
+                    name += c
+                    pos++
+                }
+                return name
+            }
+
+            /**
+             * Parses a full name (with '.').
+             */
+            fun fullName(): String {
+                val name = name()
+
+                ws()
+                if (chr('.'))
+                    return name + '.' + fullName()
+                else
+                    return name
+            }
+
+            /**
+             * Parses a type.
+             */
+            fun type(): Type {
+                // Get name and map it to a KClass
+                val kClass = kClassFor(fullName())
+
+                // Make argument list
+                val args = arrayListOf<Type>()
+
+                // Try to read type arguments
+                ws()
+                if (chr('<')) {
+                    ws()
+
+                    while (true) {
+                        ws()
+
+                        // Recursively parse
+                        args += type()
+
+                        ws()
+
+                        // Check if there are more arguments
+                        if (!chr(','))
+                            break
+                    }
+
+                    ws()
+                    check(chr('>'))
+                    ws()
+                }
+                ws()
+
+                // Returns with determined nullability
+                if (chr('?'))
+                    return Type(kClass, true, args.toList())
+                else
+                    return Type(kClass, false, args.toList())
+            }
+
+            return type()
+        }
     }
 
     /**

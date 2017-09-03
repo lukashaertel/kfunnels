@@ -25,6 +25,7 @@ dependencies {
     compile "com.google.guava:guava:23.0"
     compile "com.google.auto:auto-common:0.8"
 
+    compileOnly "com.fasterxml.jackson.core:jackson-core:2.9.0.pr4"
     compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18"
 }
 

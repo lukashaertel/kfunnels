@@ -87,16 +87,13 @@ class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
     private var state = Optional.absent<Any?>()
 
     /**
-     * Prepare the state, i.e., read an item into [state] if none present.
+     * Prepare the state,
      */
     private suspend fun prepareNext() {
         if (!state.isPresent)
             state = Optional.of(channel.receive())
     }
 
-    /**
-     * Takes the next item, leaves the state empty.
-     */
     private suspend fun takeNext(): Any? {
         prepareNext()
         val result = state.get()
@@ -104,9 +101,6 @@ class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
         return result
     }
 
-    /**
-     * Peeks the next item, leaves the state with the item.
-     */
     private suspend fun peekNext(): Any? {
         prepareNext()
         return state.get()
