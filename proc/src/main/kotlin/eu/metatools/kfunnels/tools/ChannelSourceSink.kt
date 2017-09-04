@@ -1,7 +1,7 @@
 package eu.metatools.kfunnels.tools
 
-import com.google.common.base.Optional
 import eu.metatools.kfunnels.*
+import eu.metatools.kfunnels.utils.SuspendPeekable
 import kotlinx.coroutines.experimental.channels.Channel
 
 /**
@@ -81,89 +81,70 @@ class ChannelSink(val channel: Channel<Any?>) : SuspendSink {
  * Receives items from the channel using [Channel.receive].
  */
 class ChannelSource(val channel: Channel<Any?>) : SuspendSource {
-    /**
-     * The element that was peeked last or absent.
-     */
-    private var state = Optional.absent<Any?>()
-
-    /**
-     * Prepare the state,
-     */
-    private suspend fun prepareNext() {
-        if (!state.isPresent)
-            state = Optional.of(channel.receive())
+    private val items = object : SuspendPeekable<Any?>() {
+        suspend override fun provide() =
+                channel.receive()
     }
 
-    private suspend fun takeNext(): Any? {
-        prepareNext()
-        val result = state.get()
-        state = Optional.absent()
-        return result
-    }
-
-    private suspend fun peekNext(): Any? {
-        prepareNext()
-        return state.get()
-    }
 
     override suspend fun begin(type: Type): Begin {
-        check(takeNext() == Event.BEGIN)
+        check(items.takeNext() == Event.BEGIN)
         return Unfunnel
     }
 
     override suspend fun isEnd() =
-            peekNext() == Event.END
+            items.peekNext() == Event.END
 
     override suspend fun end(type: Type) {
-        check(takeNext() == Event.END)
+        check(items.takeNext() == Event.END)
     }
 
     override suspend fun beginNested(label: String, type: Type): Nested {
-        check(takeNext() == Event.BEGIN_NESTED)
+        check(items.takeNext() == Event.BEGIN_NESTED)
         if (type.isTerminal())
             return Nest
         else
-            return Substitute(takeNext() as Type)
+            return Substitute(items.takeNext() as Type)
     }
 
     override suspend fun endNested(label: String, type: Type) {
-        check(takeNext() == Event.END_NESTED)
+        check(items.takeNext() == Event.END_NESTED)
     }
 
     override suspend fun getBoolean(label: String): Boolean =
-            takeNext() as Boolean
+            items.takeNext() as Boolean
 
     override suspend fun getByte(label: String): Byte =
-            takeNext() as Byte
+            items.takeNext() as Byte
 
     override suspend fun getShort(label: String): Short =
-            takeNext() as Short
+            items.takeNext() as Short
 
     override suspend fun getInt(label: String): Int =
-            takeNext() as Int
+            items.takeNext() as Int
 
     override suspend fun getLong(label: String): Long =
-            takeNext() as Long
+            items.takeNext() as Long
 
     override suspend fun getFloat(label: String): Float =
-            takeNext() as Float
+            items.takeNext() as Float
 
     override suspend fun getDouble(label: String): Double =
-            takeNext() as Double
+            items.takeNext() as Double
 
     override suspend fun getChar(label: String): Char =
-            takeNext() as Char
+            items.takeNext() as Char
 
     override suspend fun isNull(label: String): Boolean =
-            when (takeNext()) {
+            when (items.takeNext()) {
                 Event.IS_NULL -> true
                 Event.IS_NOT_NULL -> false
                 else -> error("Not at a valid token.")
             }
 
     override suspend fun getUnit(label: String) =
-            takeNext() as Unit
+            items.takeNext() as Unit
 
     override suspend fun getString(label: String): String =
-            takeNext() as String
+            items.takeNext() as String
 }
