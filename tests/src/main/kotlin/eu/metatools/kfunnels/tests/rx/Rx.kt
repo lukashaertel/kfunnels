@@ -171,3 +171,20 @@ inline fun <E> Module.stream(crossinline sourceProvider: () -> Source) =
                 })
             }
         }
+
+/**
+ * Uses a source provider to create a repeatable observable.
+ */
+inline fun <E> Module.stream(crossinline sourceProvider: () -> Source, crossinline configureType: (Type) -> Type) =
+        Observable.create<E> { emitter ->
+            sourceProvider().useIfClosable {
+                val read = read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
+                    // Wire emitter cancellation into receiver
+                    emitter.setCancellable { it.shouldContinue = false }
+
+                    // Write receiver emissions into emitter
+                    it.onElement = { emitter.onNext(it) }
+                    it.onEnd = { emitter.onComplete() }
+                }, configureType)
+            }
+        }
