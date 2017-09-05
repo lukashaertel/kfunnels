@@ -8,6 +8,7 @@ import io.reactivex.ObservableEmitter
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.sync.Mutex
 
+@Deprecated("Does not really work :(")
 object RxModule : Module {
     override fun <T> resolve(type: Type): Funneler<T> {
         @Suppress("unchecked_cast")
