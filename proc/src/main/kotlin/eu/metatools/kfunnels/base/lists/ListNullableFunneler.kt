@@ -3,6 +3,7 @@ package eu.metatools.kfunnels.base.lists
 import eu.metatools.kfunnels.*
 import java.util.*
 
+// TODO This can probably be merged with Listlike Nullable Funneler
 class ListNullableFunneler(val create: () -> MutableList<Any?>) : Funneler<List<Any?>> {
     companion object {
         /**

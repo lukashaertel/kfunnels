@@ -1,9 +1,11 @@
 package eu.metatools.kfunnels.tests
 
 import eu.metatools.kfunnels.*
-import eu.metatools.kfunnels.base.*
+import eu.metatools.kfunnels.base.NoFunneler
+import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.lists.ListFunneler
 import eu.metatools.kfunnels.base.lists.ListNullableFunneler
+import eu.metatools.kfunnels.base.onAfterCreate
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import eu.metatools.kfunnels.tools.ListSink
@@ -16,7 +18,7 @@ import javafx.collections.ObservableSet
 /**
  * Module that handles [ObservableList] and [ObservableSet].
  */
-object ObservablesModule : Module {
+object FxObservablesModule : Module {
     override fun <T> resolve(type: Type): Funneler<T> {
         @Suppress("unchecked_cast")
         if (type.kClass == ObservableList::class)
@@ -40,7 +42,7 @@ object ObservablesModule : Module {
 
 fun main(args: Array<String>) {
     // Make a new module that also supports observable collections
-    val module = (ObservablesModule then ServiceModule).std
+    val module = (FxObservablesModule then ServiceModule).std
 
     // Make a list to serialize
     val items = (1..100).toList()
