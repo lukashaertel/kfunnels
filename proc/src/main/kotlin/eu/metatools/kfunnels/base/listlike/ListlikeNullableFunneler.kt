@@ -4,6 +4,8 @@ import eu.metatools.kfunnels.*
 import java.util.*
 
 abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
+    protected open fun combineContinue(source: T) = true
+    
     protected abstract fun create(): T
     protected abstract fun begin(source: T): U
     protected abstract fun end(source: T): U
@@ -47,7 +49,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineBoolean(r, source.getNullableBoolean((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -56,7 +58,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineByte(r, source.getNullableByte((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -66,7 +68,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineShort(r, source.getNullableShort((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -75,7 +77,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineInt(r, source.getNullableInt((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -84,7 +86,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineLong(r, source.getNullableLong((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -93,7 +95,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineFloat(r, source.getNullableFloat((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -102,7 +104,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineDouble(r, source.getNullableDouble((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -111,7 +113,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineChar(r, source.getNullableChar((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -120,7 +122,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineUnit(r, source.getNullableUnit((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -129,7 +131,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineString(r, source.getNullableString((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -142,7 +144,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                     val r = create()
                     source.afterCreate(begin(r))
                     var p = 0
-                    while (!source.isEnd())
+                    while (!source.isEnd() && combineContinue(r))
                         combineElement(r, source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg))
                     return@markAround end(r)
                 } else {
@@ -151,7 +153,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                     val r = create()
                     source.afterCreate(begin(r))
                     var p = 0
-                    while (!source.isEnd())
+                    while (!source.isEnd() && combineContinue(r))
                         combineElement(r, source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg))
                     return@markAround end(r)
                 }
@@ -170,7 +172,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineBoolean(r, source.getNullableBoolean((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -179,7 +181,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineByte(r, source.getNullableByte((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -189,7 +191,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineShort(r, source.getNullableShort((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -198,7 +200,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineInt(r, source.getNullableInt((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -207,7 +209,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineLong(r, source.getNullableLong((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -216,7 +218,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineFloat(r, source.getNullableFloat((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -225,7 +227,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineDouble(r, source.getNullableDouble((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -234,7 +236,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineChar(r, source.getNullableChar((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -243,7 +245,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineUnit(r, source.getNullableUnit((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -252,7 +254,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                 val r = create()
                 source.afterCreate(begin(r))
                 var p = 0
-                while (!source.isEnd())
+                while (!source.isEnd() && combineContinue(r))
                     combineString(r, source.getNullableString((p++).toLabel()))
                 return@markAround end(r)
             }
@@ -265,7 +267,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                     val r = create()
                     source.afterCreate(begin(r))
                     var p = 0
-                    while (!source.isEnd())
+                    while (!source.isEnd() && combineContinue(r))
                         combineElement(r, source.getNullableTerminalNested(module, sub, (p++).toLabel(), type.arg))
                     return@markAround end(r)
                 } else {
@@ -274,7 +276,7 @@ abstract class ListlikeNullableFunneler<T, U> : Funneler<U> {
                     val r = create()
                     source.afterCreate(begin(r))
                     var p = 0
-                    while (!source.isEnd())
+                    while (!source.isEnd() && combineContinue(r))
                         combineElement(r, source.getDynamicNested<Any>(module, sub, (p++).toLabel(), type.arg))
                     return@markAround end(r)
                 }

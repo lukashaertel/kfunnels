@@ -186,7 +186,11 @@ private data class JObject(val map: MutableMap<String, JItem>, var closed: Boole
  * [Funneler], date might need to be preemptively pulled from the stream. The data will however be removed once
  * consumed.
  */
-class JsonSource(val parser: JsonParser) : Source {
+class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
+    override fun close() {
+        parser.close()
+    }
+
     /**
      * True if the read and write stacks have been prepared for the first read.
      */
