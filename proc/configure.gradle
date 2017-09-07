@@ -1,0 +1,16 @@
+/**
+ * Runs the block if Android was detected, passes the JAR to the closure.
+ */
+ext.onAndroid = { closure ->
+    if (ext.has("standalone") && ext.standalone == "true")
+        return
+
+    // Get platform file, then find appropriate platform, then get android.jar in the file
+    def parent = file("${System.env.ANDROID_HOME}/platforms")
+    def sdk = parent.listFiles().reverse().find { f -> f.name.matches("android-2\\d") }
+    def jar = file("$sdk/android.jar")
+
+    // If it exists, run the closure with it
+    if (jar.exists())
+        closure(jar)
+}

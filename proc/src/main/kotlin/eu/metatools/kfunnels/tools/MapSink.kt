@@ -70,7 +70,7 @@ class MapSink : Sink {
     }
 
     override fun putUnit(label: String, value: Unit) {
-        mutableMap.getOrPut(label, { value })
+        mutableMap.getOrPut(label, { })
     }
 
     override fun putString(label: String, value: String) {

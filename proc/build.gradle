@@ -1,3 +1,5 @@
+apply from: "configure.gradle"
+
 buildscript {
     ext.kotlin_version = '1.1.4-3'
 
@@ -12,8 +14,10 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
+
 repositories {
     mavenCentral()
+
     jcenter()
 }
 
@@ -29,6 +33,15 @@ dependencies {
     compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18"
 }
 
+onAndroid { jar ->
+    sourceSets {
+        main.kotlin.srcDirs += "src/android/kotlin"
+    }
+
+    dependencies {
+        compileOnly files(jar)
+    }
+}
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
