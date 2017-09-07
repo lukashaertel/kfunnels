@@ -6,7 +6,6 @@ import java.util.*
 abstract class ListlikeFunneler<T, U> : Funneler<U> {
     protected open fun combineContinue(source: T) = true
 
-    // TODO: Labels
     protected abstract fun create(): T
     protected abstract fun begin(source: T): U
     protected abstract fun end(source: T): U
@@ -24,7 +23,6 @@ abstract class ListlikeFunneler<T, U> : Funneler<U> {
 
     // TODO: Suspend
     protected abstract fun uncombineBooleans(source: U): Sequence<Boolean>
-
     protected abstract fun uncombineBytes(source: U): Sequence<Byte>
     protected abstract fun uncombineShorts(source: U): Sequence<Short>
     protected abstract fun uncombineInts(source: U): Sequence<Int>

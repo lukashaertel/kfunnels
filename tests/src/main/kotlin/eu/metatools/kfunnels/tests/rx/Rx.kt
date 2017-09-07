@@ -178,7 +178,7 @@ inline fun <E> Module.stream(crossinline sourceProvider: () -> Source) =
 inline fun <E> Module.stream(crossinline sourceProvider: () -> Source, crossinline configureType: (Type) -> Type) =
         Observable.create<E> { emitter ->
             sourceProvider().useIfClosable {
-                val read = read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
+                read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
                     // Wire emitter cancellation into receiver
                     emitter.setCancellable { it.shouldContinue = false }
 

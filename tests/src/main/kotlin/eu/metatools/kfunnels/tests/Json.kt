@@ -5,8 +5,8 @@ import eu.metatools.kfunnels.Funnelable
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.read
 import eu.metatools.kfunnels.std
-import eu.metatools.kfunnels.tools.JsonSink
-import eu.metatools.kfunnels.tools.JsonSource
+import eu.metatools.kfunnels.tools.json.JsonSink
+import eu.metatools.kfunnels.tools.json.JsonSource
 import eu.metatools.kfunnels.write
 import java.io.StringWriter
 

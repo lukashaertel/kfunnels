@@ -6,8 +6,10 @@ import eu.metatools.kfunnels.std
 import eu.metatools.kfunnels.tests.rx.ReceiverModule
 import eu.metatools.kfunnels.tests.rx.stream
 import eu.metatools.kfunnels.then
-import eu.metatools.kfunnels.tools.JsonSource
+import eu.metatools.kfunnels.tools.json.JsonSource
+import eu.metatools.kfunnels.tools.json.get
 import java.net.URL
+
 
 fun main(args: Array<String>) {
 
@@ -16,11 +18,11 @@ fun main(args: Array<String>) {
 
     // Create an observable of events
     val observable = module.stream<Event> {
-        // A new source is a JSON source for a parser on a URL
+        // A new source is a JSON source for a parser on a URL, original labels are converted.
         JsonSource(JsonFactory().createParser(URL("https://app.eurofurence.org/Api/v2/Events")))
     }
 
-    // Subscribe and print some elements.
+    // Subscribe and print some elements
     observable.skip(40)
             .take(5)
             .subscribe { println("First $it") }
@@ -28,4 +30,17 @@ fun main(args: Array<String>) {
     observable.skip(42)
             .take(5)
             .subscribe { println("Second $it") }
+
+    // A nested JSON data structure
+    val nestedAccess = """{"x":1,"y":[1,{"a": [1,2,3,4,5]}]}"""
+
+    // Create an observable of ints that are nested within
+    val nestedAccessObservable = module.stream<Int> {
+        JsonSource(JsonFactory().createParser(nestedAccess)["y/1/a"])
+    }
+
+    // Subscribe to all the integers
+    nestedAccessObservable.subscribe { println(it) }
+
+
 }

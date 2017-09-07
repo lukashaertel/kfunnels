@@ -1,26 +1,45 @@
-package eu.metatools.kfunnels.tools
+package eu.metatools.kfunnels.tools.json
 
 import com.fasterxml.jackson.core.*
-import com.fasterxml.jackson.core.base.ParserMinimalBase
-import com.google.common.base.Optional
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.utils.peekUnder
 import eu.metatools.kfunnels.utils.peekable
-import java.math.BigDecimal
-import java.math.BigInteger
+import eu.metatools.kfunnels.utils.toFirstUpper
 import java.util.*
-import kotlin.NoSuchElementException
 import kotlin.reflect.full.isSubclassOf
 
-private val disambiguateType = "_type"
+/**
+ * A JSON sink configuration.
+ * @property labelType The label for the type disambiguation's type.
+ * @property labelIt The label for the type disambiguation's actual value.
+ * @property mapNames The name mapper.
+ */
+data class JsonSinkConfig(val labelType: String, val labelIt: String, val mapNames: (String) -> String) {
+    companion object {
+        /**
+         * Names are written as is.
+         */
+        val id = JsonSinkConfig("_type", "_it", { it })
 
-private val disambiguateIt = "_it"
+        /**
+         * Default sink configuration, the value of [id].
+         */
+        val default = id
 
+        /**
+         * Creates a configuration just from the mapping, leaving labels default.
+         */
+        fun from(mapNames: (String) -> String) =
+                JsonSinkConfig("_type", "_it", mapNames)
+    }
+}
 
 /**
  * Writes to a [JsonGenerator].
+ * @param generator The generator to write to.
+ * @param config The configuration to use, defults to [JsonSinkConfig.default].
  */
-class JsonSink(val generator: JsonGenerator) : Sink {
+class JsonSink(val generator: JsonGenerator, val config: JsonSinkConfig = JsonSinkConfig.default) : Sink {
     private val isListStack = Stack<Boolean>()
 
     private fun pushList() {
@@ -68,8 +87,8 @@ class JsonSink(val generator: JsonGenerator) : Sink {
 
         if (!type.isTerminal()) {
             generator.writeStartObject(value)
-            generator.writeStringField(disambiguateType, type.forInstance(value).toString())
-            generator.writeFieldName(disambiguateIt)
+            generator.writeStringField(config.labelType, type.forInstance(value).toString())
+            generator.writeFieldName(config.labelIt)
             pushObject()
         }
 
@@ -182,11 +201,56 @@ private data class JArray(val deque: Deque<JItem>, var closed: Boolean = false) 
 private data class JObject(val map: MutableMap<String, JItem>, var closed: Boolean = false) : JItem()
 
 /**
+ * A JSON source configuration.
+ * @property labelType The label for the type disambiguation's type.
+ * @property labelIt The label for the type disambiguation's actual value.
+ * @property mapNames The name mapper.
+ */
+data class JsonSourceConfig(val labelType: String, val labelIt: String,
+                            val mapNames: (Map<String, *>, String) -> String) {
+    companion object {
+        /**
+         * Names match exactly.
+         */
+        val id = JsonSourceConfig("_type", "_it", { _, k -> k })
+
+        /**
+         * A name resolver where first key is mapped to Java conventions.
+         */
+        val firstLower = JsonSourceConfig("_type", "_it", { _, k -> k.toFirstUpper() })
+
+        /**
+         * A relaxed name resolver, where case must not match.
+         */
+        val relaxed = JsonSourceConfig("_type", "_it", { m, k ->
+            // Lowecase version of label for search
+            val l = k.toLowerCase()
+
+            // First key in the map that matches in lower case, or the original key as a fallback.
+            m.keys.firstOrNull { it.toLowerCase() == l } ?: k
+        })
+
+        /**
+         * The default name resolver, the value of [firstLower].
+         */
+        val default = firstLower
+
+        /**
+         * Creates a configuration just from the mapping, leaving labels default.
+         */
+        fun from(mapNames: (Map<String, *>, String) -> String) =
+                JsonSourceConfig("_type", "_it", mapNames)
+    }
+}
+
+/**
  * Reads from a [JsonParser]. To align labels that are present in the stream with labels that are requested by a
  * [Funneler], date might need to be preemptively pulled from the stream. The data will however be removed once
  * consumed.
+ * @property parser The parser to read from, will be left after the last required element after parsing.
+ * @property config The configuration to use. Defaults to [JsonSourceConfig.default].
  */
-class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
+class JsonSource(val parser: JsonParser, val config: JsonSourceConfig = JsonSourceConfig.default) : Source, AutoCloseable {
     override fun close() {
         parser.close()
     }
@@ -338,8 +402,10 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
         var entered = 0
         while (tokens.peekNext() != null && entered >= 0)
             when (advanceOne()) {
-                JsonSource.Advancement.START -> entered++
-                JsonSource.Advancement.END -> entered--
+                Advancement.START -> entered++
+                Advancement.END -> entered--
+                else -> {
+                }
             }
     }
 
@@ -353,12 +419,15 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
             is JArray ->
                 error("Trying to advance for non-object.")
             is JObject -> {
+                // Map label
+                val mappedLabel = config.mapNames(current.map, label)
+
                 // Advance if the label is not yet present.
-                while (label !in current.map && writeStack.size >= readStack.size && tokens.peekNext() != null)
+                while (mappedLabel !in current.map && writeStack.size >= readStack.size && tokens.peekNext() != null)
                     advanceOne()
 
-                if (label !in current.map)
-                    error("Object was closed without initializing $label: ${current.map}")
+                if (mappedLabel !in current.map)
+                    error("Object was closed without initializing $mappedLabel: ${current.map}")
             }
         }
     }
@@ -398,7 +467,7 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
             is JArray ->
                 error("Trying to check if $label is present for non-object.")
             is JObject -> {
-                return label in current.map
+                return config.mapNames(current.map, label) in current.map
             }
         }
     }
@@ -431,7 +500,7 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
             is JArray ->
                 error("Trying to enter for non-object.")
             is JObject -> {
-                readStack.push(current.map[label])
+                readStack.push(current.map[config.mapNames(current.map, label)])
             }
         }
     }
@@ -464,7 +533,7 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
             is JArray ->
                 error("Trying to leave for non-object.")
             is JObject -> {
-                val target = current.map.remove(label)
+                val target = current.map.remove(config.mapNames(current.map, label))
                 when (target) {
                     is JObject -> check(target.map.isEmpty()) { "Unconsumed values in the source: ${target.map}" }
                     is JArray -> check(target.deque.isEmpty()) { "Unconsumed values in the source: ${target.deque}" }
@@ -619,15 +688,15 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
         if (type.isTerminal())
             return Nest
         else {
-            val sub = readTerminal(disambiguateType) { Type.parse(it as String) }
-            enter(disambiguateIt)
+            val sub = readTerminal(config.labelType) { Type.parse(it as String) }
+            enter(config.labelIt)
             return Substitute(sub)
         }
     }
 
     override fun endNested(label: String, type: Type) {
         if (!type.isTerminal())
-            leave(disambiguateIt)
+            leave(config.labelIt)
 
         val current = readStack.peekUnder()
         when (current) {
@@ -677,9 +746,10 @@ class JsonSource(val parser: JsonParser) : Source, AutoCloseable {
                 return false
             }
             is JObject -> {
-                val value = current.map[label]
+                val mappedLabel = config.mapNames(current.map, label)
+                val value = current.map[mappedLabel]
                 if (value is JTerminal && value.value == NULL) {
-                    current.map.remove(label)
+                    current.map.remove(mappedLabel)
                     return true
                 }
 
