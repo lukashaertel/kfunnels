@@ -19,13 +19,23 @@ object ServiceModule : Module {
             .map { it.provide() }
 
     /**
+     * Extra modules that are registered by hand.
+     */
+    val extra = hashSetOf<Module>()
+
+    /**
+     * Gets all available modules.
+     */
+    val available get() = (delegates + extra).distinct()
+
+    /**
      * The cache, storing already resolved funnelers.
      */
     private var cache = hashMapOf<Type, Funneler<Any?>>()
 
     override fun <T> resolve(type: Type): Funneler<T> {
         val r = cache.getOrPut(type) {
-            val r = delegates.map {
+            val r = available.map {
                 it.resolve<T>(type)
             }.firstOrNull {
                 it != NoFunneler

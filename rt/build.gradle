@@ -13,6 +13,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'maven'
 
 repositories {
     mavenCentral()
@@ -37,14 +38,6 @@ onAndroid { jar ->
     dependencies {
         compileOnly files(jar)
     }
-}
-
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.6"
-}
-
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.6"
 }
 
 kotlin {

@@ -6,16 +6,17 @@ buildscript {
 
     repositories {
         jcenter()
-
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:2.3.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 android {
@@ -59,7 +60,6 @@ android {
 
     sourceSets {
         main.java.srcDirs += "src/main/kotlin"
-        main.java.srcDirs += "$buildDir/generated/source/kapt/main"
     }
 
     productFlavors {
@@ -74,16 +74,18 @@ android {
     }
 }
 
+evaluationDependsOn(':proc')
+evaluationDependsOn(':rt')
+
 dependencies {
+    compile 'com.android.support:multidex:1.0.1'
+
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.0.pr4'
     compile 'com.google.guava:guava:23.0-android'
-    compile files("../rt/build/libs/rt.jar")
 
-    kapt files("../proc/build/libs/proc.jar")
-    kapt 'com.google.guava:guava:23.0'
-    kapt 'com.google.auto:auto-common:0.8'
-    //compile project(":rt")
-    //kapt project(":proc")
+    compile project(':rt') //'eu.metatools.kfunnels:rt:0.0.3-SNAPSHOT'
+    kapt project(':proc') //'eu.metatools.kfunnels:proc:0.0.3-SNAPSHOT'
 }

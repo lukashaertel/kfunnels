@@ -1,5 +1,3 @@
 rootProject.name = 'kfunnels'
-include 'proc'
-include 'rt'
-include 'tests'
-//include 'android'
+include ':proc', ':rt', ':tests'
+include ':android'

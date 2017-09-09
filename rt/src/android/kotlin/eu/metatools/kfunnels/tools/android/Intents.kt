@@ -63,8 +63,6 @@ private val Type.variant
             CharArray::class -> Variant.CHAR_ARRAY
 
             Bundle::class -> Variant.BUNDLE
-            Serializable::class -> Variant.SERIALIZABLE
-            Parcelable::class -> Variant.PARCELABLE
 
             Array<String>::class -> Variant.STRING_ARRAY
             Array<Parcelable>::class -> Variant.PARCELABLE_ARRAY
@@ -78,12 +76,13 @@ private val Type.variant
                 else -> Variant.NONE
             }
 
-            else -> {
-                if (kClass.isSubclassOf(Collection::class))
-                    Variant.COLLECTION
-                else
-                    Variant.NONE
-            }
+            else ->
+                when {
+                    kClass.isSubclassOf(Serializable::class) -> Variant.SERIALIZABLE
+                    kClass.isSubclassOf(Parcelable::class) -> Variant.PARCELABLE
+                    kClass.isSubclassOf(Collection::class) -> Variant.COLLECTION
+                    else -> Variant.NONE
+                }
         }
 
 /**
