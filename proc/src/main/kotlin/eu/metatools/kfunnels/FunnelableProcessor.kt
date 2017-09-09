@@ -14,11 +14,6 @@ import kotlin.reflect.jvm.internal.impl.serialization.ProtoBuf
 import kotlin.reflect.jvm.internal.impl.serialization.jvm.JvmProtoBufUtil
 
 /**
- * Annotates elements that should have a funneler generated.
- */
-annotation class Funnelable
-
-/**
  * Abstraction of qualified names.
  */
 private data class Name(val packageName: String?, val className: String) {

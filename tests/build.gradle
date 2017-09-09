@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.1.4-2'
+    ext.kotlin_version = '1.1.4-3'
 
     repositories {
         mavenCentral()
@@ -17,22 +17,26 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18"
-    compile "com.fasterxml.jackson.core:jackson-core:2.9.0.pr4"
-    compile "net.java.openjfx.backport:openjfx-78-backport:1.8.0-ea-b96.1"
+    compile "org.jetbrains.kotlin:kotlin-runtime:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
+
+    compile 'com.google.guava:guava:23.0'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.0.pr4'
+    compile 'net.java.openjfx.backport:openjfx-78-backport:1.8.0-ea-b96.1'
     compile 'io.reactivex.rxjava2:rxkotlin:2.1.0'
 
-    compile project(":proc")
+    compile project(':rt')
     kapt project(":proc")
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "1.6"
 }
 
 compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "1.6"
 }
 sourceSets {
     main.kotlin.srcDirs += "$buildDir/generated/source/kapt/main"

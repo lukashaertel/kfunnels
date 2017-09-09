@@ -12,13 +12,25 @@ data class Some<T>(val t: T) : Option<T>() {
         get() = t
 }
 
-class Nothing<T>() : Option<T>() {
+class None<T>() : Option<T>() {
     override val isPresent: Boolean
         get() = false
     override val value: T
         get() = error("Value is not present.")
 }
 
+inline fun <T, U> Option<T>.map(present: (T) -> U, absent: () -> U) =
+        if (isPresent)
+            present(value)
+        else
+            absent()
+
+
+fun <T> Option<T>.orDefault(default: () -> T) =
+        if (isPresent)
+            value
+        else
+            default()
 
 /**
  * Provides peekability for non-peekable item sources.
@@ -27,7 +39,7 @@ abstract class Peekable<T> {
     /**
      * The element that was peeked last or absent.
      */
-    private var state: Option<T> = Nothing()
+    private var state: Option<T> = None()
 
     /**
      * Prepare the state,
@@ -40,7 +52,7 @@ abstract class Peekable<T> {
     fun takeNext(): T {
         prepareNext()
         val result = state.value
-        state = Nothing()
+        state = None()
         return result
     }
 
@@ -59,7 +71,7 @@ abstract class SuspendPeekable<T> {
     /**
      * The element that was peeked last or absent.
      */
-    private var state: Option<T> = Nothing()
+    private var state: Option<T> = None()
 
     /**
      * Prepare the state,
@@ -72,7 +84,7 @@ abstract class SuspendPeekable<T> {
     suspend fun takeNext(): T {
         prepareNext()
         val result = state.value
-        state = Nothing()
+        state = None()
         return result
     }
 

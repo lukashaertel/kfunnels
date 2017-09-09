@@ -1,0 +1,89 @@
+apply plugin: "com.android.application"
+apply plugin: "kotlin-android"
+
+buildscript {
+    ext.kotlin_version = '1.1.4-3'
+
+    repositories {
+        jcenter()
+
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+android {
+
+    compileSdkVersion 25
+    buildToolsVersion "26.0.1"
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 25
+        multiDexEnabled true
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+
+    defaultConfig {
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+        main.java.srcDirs += "$buildDir/generated/source/kapt/main"
+    }
+
+    productFlavors {
+        dev {
+            minSdkVersion 21
+            applicationId "eu.metatools.kfunnels.android.dev"
+        }
+        prod {
+            minSdkVersion 16
+            applicationId "eu.metatools.kfunnels.android"
+        }
+    }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    compile 'com.google.guava:guava:23.0-android'
+    compile files("../rt/build/libs/rt.jar")
+
+    kapt files("../proc/build/libs/proc.jar")
+    kapt 'com.google.guava:guava:23.0'
+    kapt 'com.google.auto:auto-common:0.8'
+    //compile project(":rt")
+    //kapt project(":proc")
+}

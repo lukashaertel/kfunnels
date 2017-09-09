@@ -10,3 +10,13 @@ fun <E> List<E>.peekUnder(): E {
         throw EmptyStackException()
     return get(size - 2)
 }
+
+fun Stack<Int>.incTop() {
+    push(pop() + 1)
+}
+
+fun Stack<Int>.decTop() {
+    push(pop() - 1)
+}
+
+fun Stack<Int>.topZero() = peek() == 0

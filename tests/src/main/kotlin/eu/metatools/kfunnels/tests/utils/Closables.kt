@@ -5,8 +5,12 @@ package eu.metatools.kfunnels.tests.utils
  */
 inline fun <T> T.useIfClosable(block: (T) -> Unit) {
     val x = this as? AutoCloseable
-    if (x != null)
-        x.use { block(this) }
-    else
+    if (x != null) {
+        try {
+            block(this)
+        } finally {
+            x.close()
+        }
+    } else
         block(this)
 }

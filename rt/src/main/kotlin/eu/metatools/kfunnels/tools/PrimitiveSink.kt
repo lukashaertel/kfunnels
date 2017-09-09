@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.reflect.full.isSubclassOf
 
 /**
- * Wraps the [PrimitiveSink] as a [Sink].
+ * Wraps the [PrimitiveSink] as a [Sink]. This class requires compiling with Guava.
  */
 fun PrimitiveSink.asSeqSink() = object : Sink {
     override fun begin(type: Type, value: Any?): Boolean {

@@ -161,7 +161,7 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
         }
 
         /**
-         * Analyzes the type and passes it to the Java reflection translator.
+         * Analyzes the type and passes it to the Java reflection translator. This method requires compiling with Guava.
          * **WARNING: Nullable marks are not supported by this method.**
          */
         inline fun <reified T> from() =
