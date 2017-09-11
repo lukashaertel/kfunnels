@@ -1,3 +1,6 @@
+group = 'eu.metatools.kfunnels'
+version = '0.0.3-SNAPSHOT'
+
 apply from: "configure.gradle"
 
 buildscript {

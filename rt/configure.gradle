@@ -7,6 +7,8 @@ ext.onAndroid = { closure ->
 
     // Get platform file, then find appropriate platform, then get android.jar in the file
     def parent = file("${System.env.ANDROID_HOME}/platforms")
+    if (!parent.exists())
+        return
     def sdk = parent.listFiles().reverse().find { f -> f.name.matches("android-2\\d") }
     def jar = file("$sdk/android.jar")
 
