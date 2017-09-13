@@ -3,6 +3,31 @@
 
 Generates serialization and unserialization for Kotlin classes via annotation processing. Check out the [wiki](https://github.com/lukashaertel/kfunnels/wiki) for more details.
 
+## Include in your project
+The artifacts are available via [JitPack](https://jitpack.io/). The runtime (funnelers, sources and sinks) should be linked as a `compile` dependency, the processor as a `kapt` dependency. You'll probably want to include guava, as it's type tokens help kfunnels to automatically infer the [type](https://github.com/lukashaertel/kfunnels/wiki/Type) of generic classes like lists.
+
+```groovy
+apply plugin: "kotlin-kapt"
+
+dependencies {
+    compile 'com.github.lukashaertel.kfunnels:rt:0.0.4'
+    kapt 'com.github.lukashaertel.kfunnels:proc:0.0.4'
+    
+    // Include this dependency to support inferring the Type from Guava's TypeToken
+    compile 'com.google.guava:guava:23.0'
+    
+    // Include this for RxKotlin tools
+    compile 'io.reactivex.rxjava2:rxkotlin:2.1.0'
+    // Include this for JSON (de)serialization tools.
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.0.pr4'
+}
+
+kapt {
+    correctErrorTypes = true
+}
+```
+
+Dependencies to Guava and other libraries are kept optional to publish everything in one artifact without automatically cluttering the build with potentially unwanted depdendencies. Keep in mind that the used versions should be compatible.
 
 ## Define the data
 
