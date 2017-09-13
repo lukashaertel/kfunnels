@@ -179,7 +179,7 @@ fun main(args: Array<String>) {
 ```
 
 ### Android
-Check out the [android co-repository](https://github.com/lukashaertel/kfunnels-android) for a demo app using RxKotlin observables, read from the web, deserialized from JSON, and fed into a nice list.
+Check out the [android co-repository](https://github.com/lukashaertel/kfunnels-android) for a demo app using [RxKotlin](https://github.com/ReactiveX/RxKotlin) observables, read from the web, deserialized from JSON, and fed into a nice list.
 
 ## Output
 
@@ -212,7 +212,7 @@ Another(i=Thing(i=1, j=3.4), s=Left(i=3))
 -2011054348
 ```
 
-# Define output and input
+## Define output and input
 Outputs are defined as `Sink`s. A simple example is the list sink, where all items are stored in a list (with some additional tokens to mark special events). There is also a class `SuspendSink` that provides the exact same signatures but suspended. The input class `Source` has matching methods. For nested elements it allows for type substitution, so that an implementation type may be unfunneled instead of an interface.
 
 ```kotlin
