@@ -5,9 +5,10 @@ import eu.metatools.kfunnels.Funnelable
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.onAfterCreate
 import eu.metatools.kfunnels.read
-import eu.metatools.kfunnels.std
+import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.then
 import eu.metatools.kfunnels.tools.json.JsonSource
+import eu.metatools.kfunnels.tools.json.JsonSourceConfig
 import javafx.collections.ListChangeListener.Change
 import javafx.collections.ObservableList
 import java.net.URL
@@ -40,10 +41,10 @@ fun main(args: Array<String>) {
     val url = "https://app.eurofurence.org/Api/v2/Events"
 
     // Make a new module that also supports observable collections
-    val module = (FxObservablesModule then ServiceModule).std
+    val module = (FxObservablesModule then ServiceModule)
 
     val cloneItems = JsonFactory().createParser(URL(url)).use {
-        module.read<List<Event>>(JsonSource(it).onAfterCreate<ObservableList<Event>> {
+        module.read<List<Event>>(JsonSource(it, JsonSourceConfig.upperToLower).onAfterCreate<ObservableList<Event>> {
             // Add a listener to the observable list before items will be sent to it
             it.addListener { c: Change<out Event> ->
                 println(c)

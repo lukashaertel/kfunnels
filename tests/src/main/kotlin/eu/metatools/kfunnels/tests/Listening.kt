@@ -1,6 +1,7 @@
 package eu.metatools.kfunnels.tests
 
 import eu.metatools.kfunnels.*
+import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.base.NoFunneler
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.lists.ListFunneler

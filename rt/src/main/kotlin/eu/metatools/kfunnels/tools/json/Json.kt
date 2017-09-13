@@ -217,7 +217,7 @@ data class JsonSourceConfig(val labelType: String, val labelIt: String,
         /**
          * A name resolver where first key is mapped to Java conventions.
          */
-        val firstLower = JsonSourceConfig("_type", "_it", { _, k -> k.toFirstUpper() })
+        val upperToLower = JsonSourceConfig("_type", "_it", { _, k -> k.toFirstUpper() })
 
         /**
          * A relaxed name resolver, where case must not match.
@@ -231,9 +231,9 @@ data class JsonSourceConfig(val labelType: String, val labelIt: String,
         })
 
         /**
-         * The default name resolver, the value of [firstLower].
+         * The default name resolver, the value of [id].
          */
-        val default = firstLower
+        val default = id
 
         /**
          * Creates a configuration just from the mapping, leaving labels default.

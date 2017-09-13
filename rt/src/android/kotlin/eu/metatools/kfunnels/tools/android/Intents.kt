@@ -298,7 +298,7 @@ class IntentSource(val intent: Intent) : Source, LabelStack {
 
     override fun begin(type: Type): Begin {
         labels.push(type.kClass.qualifiedName ?: "anonymous")
-        return doBegin(type).map({ Value(it) }, { Unfunnel })
+        return doBegin(type).fold({ Value(it) }, { Unfunnel })
     }
 
     override fun end(type: Type) {
@@ -313,7 +313,7 @@ class IntentSource(val intent: Intent) : Source, LabelStack {
 
     override fun beginNested(label: String, type: Type): Nested {
         labels.push(label)
-        return doBegin(type).map({ Item(it) }, { Nest })
+        return doBegin(type).fold({ Item(it) }, { Nest })
     }
 
     override fun endNested(label: String, type: Type) {

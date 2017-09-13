@@ -2,11 +2,12 @@ package eu.metatools.kfunnels.tests
 
 import com.fasterxml.jackson.core.JsonFactory
 import eu.metatools.kfunnels.base.ServiceModule
-import eu.metatools.kfunnels.std
+import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.tools.ReceiverModule
 import eu.metatools.kfunnels.tools.stream
 import eu.metatools.kfunnels.then
 import eu.metatools.kfunnels.tools.json.JsonSource
+import eu.metatools.kfunnels.tools.json.JsonSourceConfig
 import eu.metatools.kfunnels.tools.json.get
 import java.net.URL
 
@@ -19,7 +20,8 @@ fun main(args: Array<String>) {
     // Create an observable of events
     val observable = module.stream<Event> {
         // A new source is a JSON source for a parser on a URL, original labels are converted.
-        JsonSource(JsonFactory().createParser(URL("https://app.eurofurence.org/Api/v2/Events")))
+        JsonSource(JsonFactory().createParser(URL("https://app.eurofurence.org/Api/v2/Events")),
+                JsonSourceConfig.upperToLower)
     }
 
     // Subscribe and print some elements
@@ -41,6 +43,4 @@ fun main(args: Array<String>) {
 
     // Subscribe to all the integers
     nestedAccessObservable.subscribe { println(it) }
-
-
 }

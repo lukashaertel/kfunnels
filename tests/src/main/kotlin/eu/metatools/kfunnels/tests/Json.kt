@@ -3,8 +3,8 @@ package eu.metatools.kfunnels.tests
 import com.fasterxml.jackson.core.JsonFactory
 import eu.metatools.kfunnels.Funnelable
 import eu.metatools.kfunnels.base.ServiceModule
+import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.read
-import eu.metatools.kfunnels.std
 import eu.metatools.kfunnels.tools.json.JsonSink
 import eu.metatools.kfunnels.tools.json.JsonSource
 import eu.metatools.kfunnels.write
@@ -119,4 +119,5 @@ fun main(args: Array<String>) {
 
     // Print parsed list
     println(listClone)
+
 }

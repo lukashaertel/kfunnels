@@ -2,6 +2,7 @@ package eu.metatools.kfunnels.tests
 
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.ServiceModule
+import eu.metatools.kfunnels.tools.PartialSource
 import javax.imageio.spi.ServiceRegistry
 
 /**
@@ -17,13 +18,9 @@ data class Item(val language: String) {
 /**
  * Language source provides language and a language dependent value as a string.
  */
-class LanguageSource(val language: String, val value: String) : Source {
+class LanguageSource(val language: String, val value: String) : PartialSource() {
     private var item: Item? = null
     override fun begin(type: Type) = Unfunnel
-
-    override fun isEnd(): Boolean {
-        error("Should not be used.")
-    }
 
     override fun end(type: Type) {
     }
@@ -35,30 +32,6 @@ class LanguageSource(val language: String, val value: String) : Source {
     override fun beginNested(label: String, type: Type) = Nest
 
     override fun endNested(label: String, type: Type) {
-    }
-
-    override fun getBoolean(label: String): Boolean {
-        error("Should not be used.")
-    }
-
-    override fun getByte(label: String): Byte {
-        error("Should not be used.")
-    }
-
-    override fun getShort(label: String): Short {
-        error("Should not be used.")
-    }
-
-    override fun getInt(label: String): Int {
-        error("Should not be used.")
-    }
-
-    override fun getLong(label: String): Long {
-        error("Should not be used.")
-    }
-
-    override fun getFloat(label: String): Float {
-        error("Should not be used.")
     }
 
     /**
@@ -73,18 +46,6 @@ class LanguageSource(val language: String, val value: String) : Source {
             "en" -> value.toDouble()
             else -> error("Unknown language ${item!!.language}")
         }
-    }
-
-    override fun getChar(label: String): Char {
-        error("Should not be used.")
-    }
-
-    override fun isNull(label: String): Boolean {
-        error("Should not be used.")
-    }
-
-    override fun getUnit(label: String) {
-        error("Should not be used.")
     }
 
     override fun getString(label: String): String {

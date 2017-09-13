@@ -4,7 +4,7 @@ import eu.metatools.kfunnels.tools.ChannelSink
 import eu.metatools.kfunnels.tools.ChannelSource
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.read
-import eu.metatools.kfunnels.std
+import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.write
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.Channel

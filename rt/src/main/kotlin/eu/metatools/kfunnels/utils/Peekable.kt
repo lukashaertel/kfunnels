@@ -1,36 +1,5 @@
 package eu.metatools.kfunnels.utils
 
-sealed class Option<T> {
-    abstract val isPresent: Boolean
-    abstract val value: T
-}
-
-data class Some<T>(val t: T) : Option<T>() {
-    override val isPresent: Boolean
-        get() = true
-    override val value: T
-        get() = t
-}
-
-class None<T>() : Option<T>() {
-    override val isPresent: Boolean
-        get() = false
-    override val value: T
-        get() = error("Value is not present.")
-}
-
-inline fun <T, U> Option<T>.map(present: (T) -> U, absent: () -> U) =
-        if (isPresent)
-            present(value)
-        else
-            absent()
-
-
-fun <T> Option<T>.orDefault(default: () -> T) =
-        if (isPresent)
-            value
-        else
-            default()
 
 /**
  * Provides peekability for non-peekable item sources.
@@ -45,7 +14,7 @@ abstract class Peekable<T> {
      * Prepare the state,
      */
     private fun prepareNext() {
-        if (!state.isPresent)
+        if (!state.isSome)
             state = Some(provide())
     }
 
@@ -77,7 +46,7 @@ abstract class SuspendPeekable<T> {
      * Prepare the state,
      */
     private suspend fun prepareNext() {
-        if (!state.isPresent)
+        if (!state.isSome)
             state = Some(provide())
     }
 

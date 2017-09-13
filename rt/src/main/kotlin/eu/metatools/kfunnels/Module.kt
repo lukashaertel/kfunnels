@@ -33,10 +33,6 @@ interface ModuleProvider {
     fun provide(): Module
 }
 
-/**
- * Returns a composite module of this module and the [StdlibModule]. This should normally be used to support primitives.
- */
-val Module.std get() = this then StdlibModule
 
 /**
  * Adds support for first level nullable inputs to [Module.resolve]. Nested nullable values are ususally handled within

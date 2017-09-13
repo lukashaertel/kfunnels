@@ -8,6 +8,7 @@ import eu.metatools.kfunnels.base.lists.ListNullableFunneler
 import eu.metatools.kfunnels.base.sets.SetFunneler
 import eu.metatools.kfunnels.base.sets.SetNullableFunneler
 import eu.metatools.kfunnels.base.tuples.*
+import eu.metatools.kfunnels.then
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashSet
@@ -125,3 +126,8 @@ object StdlibModule : Module {
         return NoFunneler as Funneler<T>
     }
 }
+
+/**
+ * Returns a composite module of this module and the [StdlibModule]. This should normally be used to support primitives.
+ */
+val Module.std get() = this then StdlibModule
