@@ -1,4 +1,4 @@
-package eu.metatools.kfunnels.tests.utils
+package eu.metatools.kfunnels.utils
 
 /**
  * If the receiver is closable, it will be [AutoCloseable.use]d in the block, otherwise just passed to the block.

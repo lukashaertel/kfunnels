@@ -3,8 +3,8 @@ package eu.metatools.kfunnels.tests
 import com.fasterxml.jackson.core.JsonFactory
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.std
-import eu.metatools.kfunnels.tests.rx.ReceiverModule
-import eu.metatools.kfunnels.tests.rx.stream
+import eu.metatools.kfunnels.tools.ReceiverModule
+import eu.metatools.kfunnels.tools.stream
 import eu.metatools.kfunnels.then
 import eu.metatools.kfunnels.tools.json.JsonSource
 import eu.metatools.kfunnels.tools.json.get

@@ -1,11 +1,11 @@
-package eu.metatools.kfunnels.tests.rx
+package eu.metatools.kfunnels.tools
 
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.NoFunneler
 import eu.metatools.kfunnels.base.listlike.ListlikeFunneler
 import eu.metatools.kfunnels.base.listlike.ListlikeNullableFunneler
 import eu.metatools.kfunnels.base.onAfterCreate
-import eu.metatools.kfunnels.tests.utils.useIfClosable
+import eu.metatools.kfunnels.utils.useIfClosable
 import io.reactivex.Observable
 
 /**
