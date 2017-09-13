@@ -1,4 +1,5 @@
-![kfunnels](https://raw.githubusercontent.com/lukashaertel/kfunnels/resource/kfunnels_logo_small_text.png)
+![kfunnels](https://raw.githubusercontent.com/lukashaertel/kfunnels/resource/kfunnels_logo_small_text.png) [![Release](https://jitpack.io/v/lukashaertel/kfunnels.svg)](https://jitpack.io/#lukashaertel/kfunnels)
+
 
 Generates serialization and unserialization for Kotlin classes via annotation processing. Check out the [wiki](https://github.com/lukashaertel/kfunnels/wiki) for more details.
 
