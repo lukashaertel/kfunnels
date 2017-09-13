@@ -76,7 +76,7 @@ data class Container(val items: List<Some?>)
 data class Generic<T>(val item: T)
 ```
 
-# Use
+## Use
 
 Read and write using the generated module (with standard type support) or use the Java Service
 registry to serialize and deserialize the type.
@@ -178,7 +178,10 @@ fun main(args: Array<String>) {
 }
 ```
 
-# Output
+### Android
+Check out the [android co-repository](https://github.com/lukashaertel/kfunnels-android) for a demo app using RxKotlin observables, read from the web, deserialized from JSON, and fed into a nice list.
+
+## Output
 
 ```text
 Another(i=Thing(i=1, j=3.4), s=Left(i=3))
