@@ -4,7 +4,7 @@
 Generates serialization and unserialization for Kotlin classes via annotation processing. Check out the [wiki](https://github.com/lukashaertel/kfunnels/wiki) for more details.
 
 ## Include in your project
-The artifacts are available via [JitPack](https://jitpack.io/). The runtime (funnelers, sources and sinks) should be linked as a `compile` dependency, the processor as a `kapt` dependency. You'll probably want to include guava, as it's type tokens help kfunnels to automatically infer the [type](https://github.com/lukashaertel/kfunnels/wiki/Type) of generic classes like lists.
+The artifacts are available via [JitPack](https://jitpack.io/). The runtime (funnelers, sources and sinks) should be linked as a `compile` dependency, the processor as a `kapt` dependency. You'll probably want to include Guava, as it's type tokens help kfunnels to automatically infer the [type](https://github.com/lukashaertel/kfunnels/wiki/Type) of generic classes like lists.
 
 ```groovy
 apply plugin: "kotlin-kapt"
