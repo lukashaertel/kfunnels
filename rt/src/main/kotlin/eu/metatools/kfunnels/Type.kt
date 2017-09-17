@@ -136,6 +136,11 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
         fun list(type: Type) = Type(List::class, false, listOf(type))
 
         /**
+         * Constructs an pair type.
+         */
+        fun pair(first: Type, second: Type) = Type(Pair::class, false, listOf(first, second))
+
+        /**
          * Translates a Java reflection type.
          */
         fun from(type: java.lang.reflect.Type): Type {

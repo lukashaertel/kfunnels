@@ -61,6 +61,36 @@ infix fun Module.then(nextModule: Module) = object : Module {
 }
 
 /**
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
+ */
+fun <T> Module.read(source: Source, type: Type): T {
+    return resolve<T>(type).read(this, type, source)
+}
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source.
+ */
+suspend fun <T> Module.read(source: SuspendSource, type: Type): T {
+    return resolve<T>(type).read(this, type, source)
+}
+
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
+ */
+fun <T> Module.write(sink: Sink, type: Type, item: T) {
+    return resolve<T>(type).write(this, type, sink, item)
+}
+
+/**
+ * Resolves the funneler for the type (non-nullable, no arguments), and writes to the sink.
+ */
+suspend fun <T> Module.write(sink: SuspendSink, type: Type, item: T) {
+    return resolve<T>(type).write(this, type, sink, item)
+}
+
+
+/**
  * Resolves the funneler for the type (non-nullable, no arguments), and reads from the source. See [Type.from] for
  * limitations.
  */

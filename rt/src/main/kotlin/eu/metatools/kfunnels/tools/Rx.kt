@@ -158,7 +158,7 @@ object ReceiverModule : Module {
 /**
  * Uses a source provider to create a repeatable observable.
  */
-inline fun <E> Module.stream(crossinline sourceProvider: () -> Source) =
+inline fun <E> Module.stream(crossinline sourceProvider: () -> Source): Observable<E> =
         Observable.create<E> { emitter ->
             sourceProvider().useIfClosable {
                 read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
@@ -173,9 +173,28 @@ inline fun <E> Module.stream(crossinline sourceProvider: () -> Source) =
         }
 
 /**
+ * Uses a source provider to create a repeatable observable, uses the explicit **element** type (not the receiver
+ * with type argument).
+ */
+inline fun <E> Module.stream(type: Type, crossinline sourceProvider: () -> Source): Observable<E> =
+        Observable.create<E> { emitter ->
+            sourceProvider().useIfClosable {
+                read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
+                    // Wire emitter cancellation into receiver
+                    emitter.setCancellable { it.shouldContinue = false }
+
+                    // Write receiver emissions into emitter
+                    it.onElement = { emitter.onNext(it) }
+                    it.onEnd = { emitter.onComplete() }
+                }, Type(Receiver::class, false, listOf(type)))
+            }
+        }
+
+/**
  * Uses a source provider to create a repeatable observable.
  */
-inline fun <E> Module.stream(crossinline sourceProvider: () -> Source, crossinline configureType: (Type) -> Type) =
+inline fun <E> Module.stream(crossinline sourceProvider: () -> Source,
+                             crossinline configureType: (Type) -> Type): Observable<E> =
         Observable.create<E> { emitter ->
             sourceProvider().useIfClosable {
                 read<Receiver<E>>(it.onAfterCreate<Receiver<E>> {
@@ -188,3 +207,4 @@ inline fun <E> Module.stream(crossinline sourceProvider: () -> Source, crossinli
                 }, configureType)
             }
         }
+
