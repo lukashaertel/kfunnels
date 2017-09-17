@@ -214,13 +214,14 @@ class IndexedRawSink(val target: OutputStream,
     }
 
     private fun markIfIndex(label: String, value: Any?) {
-        if (label == indexLabel)
-            index.compute(value) { k, v ->
-                if (v != null)
-                    error("Index not unique, had $v, tried to put ${position.peek()}")
-                else
-                    position.peek()
-            }
+        if (label != indexLabel)
+            return
+
+        val prev = index.get(value)
+        if (prev == null)
+            index.put(value, position.peek())
+        else
+            error("Index not unique, had $prev, tried to put ${position.peek()}")
     }
 
     override fun beginNested(label: String, type: Type, value: Any?): Boolean {
