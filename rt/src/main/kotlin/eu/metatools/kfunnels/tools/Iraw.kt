@@ -1,10 +1,9 @@
-package eu.metatools.kfunnels.tests
+package eu.metatools.kfunnels.tools
 
 import com.fasterxml.jackson.core.JsonFactory
 import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.std
-import eu.metatools.kfunnels.tools.*
 import eu.metatools.kfunnels.tools.json.JsonSource
 import eu.metatools.kfunnels.tools.json.JsonSourceConfig
 import java.io.File
@@ -287,33 +286,3 @@ class Iraw<T, U>(val file: File,
 inline fun <reified T, reified U> iraw(
         file: File, index: KProperty1<T, U>, module: Module = ServiceModule.std, utf8: Boolean = true) =
         Iraw<T, U>(file, index, Type.from<T>(), Type.from<U>(), module, utf8)
-
-fun main(args: Array<String>) {
-
-    val store = iraw(File("iraws"), Event::id)
-
-    val url = "https://app.eurofurence.org/Api/v2/Events"
-    val events = JsonFactory().createParser(URL(url)).use {
-        ServiceModule.std.read<List<Event>>(JsonSource(it, JsonSourceConfig.upperToLower))
-    }
-
-    store.save(events)
-
-    println(store.indices().entries.sortedBy { it.key })
-
-    store.remove(listOf("bfdf6b3f-027d-4e63-979b-ed712204f55c", "496dac54-2012-4a71-9bf7-8c4651b009cf"))
-
-    println(store.indices().entries.sortedBy { it.key })
-
-    println(store.find("002c9f8b-6ddf-4723-a512-ba3870c4dad2"))
-
-    println(store.load())
-    store.stream().subscribe {
-        check(it.id != "bfdf6b3f-027d-4e63-979b-ed712204f55c")
-        check(it.id != "496dac54-2012-4a71-9bf7-8c4651b009cf")
-        println(it)
-    }
-
-
-    println(store.find("002c9f8b-6ddf-4723-a512-ba3870c4dad2"))
-}
