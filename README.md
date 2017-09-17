@@ -10,8 +10,8 @@ The artifacts are available via [JitPack](https://jitpack.io/). The runtime (fun
 apply plugin: "kotlin-kapt"
 
 dependencies {
-    compile 'com.github.lukashaertel.kfunnels:rt:0.0.4'
-    kapt 'com.github.lukashaertel.kfunnels:proc:0.0.4'
+    compile 'com.github.lukashaertel.kfunnels:rt:0.1.0'
+    kapt 'com.github.lukashaertel.kfunnels:proc:0.1.0'
     
     // Include this dependency to support inferring the Type from Guava's TypeToken
     compile 'com.google.guava:guava:23.0'
