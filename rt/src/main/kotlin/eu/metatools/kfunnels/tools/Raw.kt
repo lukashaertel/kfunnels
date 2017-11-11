@@ -196,36 +196,56 @@ class IndexedRawSink(val target: OutputStream,
                      val utf8: Boolean = true) : Sink {
     private val prim = DataOutputStream(target)
 
-    private val index = hashMapOf<Any?, Int>()
+    private val index = hashMapOf<Any?, Pair<Int, Int>>()
 
-    private val position = Stack<Int>()
+    private var depth = 0
+
+    private var start = Int.MIN_VALUE
 
     fun index() = index.toMap()
 
 
     override fun begin(type: Type, value: Any?): Boolean {
-        position.push(prim.size())
+        depth++
         return true
     }
 
     override fun end(type: Type, value: Any?) {
         prim.writeLong(endMark)
-        position.pop()
+        depth--
     }
 
-    private fun markIfIndex(label: String, value: Any?) {
-        if (label != indexLabel)
+    private fun beginMarkIndex(label: String) {
+        if (depth != -1 || label != indexLabel)
             return
 
+        if (start == Int.MIN_VALUE)
+            start = prim.size()
+    }
+
+
+    private fun endMarkIndex(label: String, value: Any?) {
+        if (depth != -1 || label != indexLabel)
+            return
+
+        check(start == Int.MIN_VALUE)
+
         val prev = index.get(value)
-        if (prev == null)
-            index.put(value, position.peek())
-        else
-            error("Index not unique, had $prev, tried to put ${position.peek()}")
+        if (value == null) {
+            index.put(value, start to prim.size())
+            start = Int.MIN_VALUE
+        } else
+            error("Index not unique, previously encountered at $prev.")
+    }
+
+    private inline fun markIndex(label: String, value: Any?, block: () -> Unit) {
+        beginMarkIndex(label)
+        block()
+        endMarkIndex(label, value)
     }
 
     override fun beginNested(label: String, type: Type, value: Any?): Boolean {
-        markIfIndex(label, value)
+        beginMarkIndex(label)
         if (!type.isTerminal())
             prim.writeUTF(type.forInstance(value).toString())
 
@@ -233,60 +253,52 @@ class IndexedRawSink(val target: OutputStream,
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
+        endMarkIndex(label, value)
     }
 
-    override fun putBoolean(label: String, value: Boolean) {
-        markIfIndex(label, value)
+    override fun putBoolean(label: String, value: Boolean) = markIndex(label, value) {
         prim.writeBoolean(value)
     }
 
-    override fun putByte(label: String, value: Byte) {
-        markIfIndex(label, value)
+    override fun putByte(label: String, value: Byte) = markIndex(label, value) {
         prim.writeByte(value.toInt())
     }
 
-    override fun putShort(label: String, value: Short) {
-        markIfIndex(label, value)
+    override fun putShort(label: String, value: Short) = markIndex(label, value) {
         prim.writeShort(value.toInt())
     }
 
-    override fun putInt(label: String, value: Int) {
-        markIfIndex(label, value)
+    override fun putInt(label: String, value: Int) = markIndex(label, value) {
         prim.writeInt(value)
     }
 
-    override fun putLong(label: String, value: Long) {
-        markIfIndex(label, value)
+    override fun putLong(label: String, value: Long) = markIndex(label, value) {
         prim.writeLong(value)
     }
 
-    override fun putFloat(label: String, value: Float) {
-        markIfIndex(label, value)
+    override fun putFloat(label: String, value: Float) = markIndex(label, value) {
         prim.writeFloat(value)
     }
 
-    override fun putDouble(label: String, value: Double) {
-        markIfIndex(label, value)
+    override fun putDouble(label: String, value: Double) = markIndex(label, value) {
         prim.writeDouble(value)
     }
 
-    override fun putChar(label: String, value: Char) {
-        markIfIndex(label, value)
+    override fun putChar(label: String, value: Char) = markIndex(label, value) {
         prim.writeChar(value.toInt())
     }
 
     override fun putNull(label: String, isNull: Boolean) {
-        if (isNull)
-            markIfIndex(label, null)
+        beginMarkIndex(label)
         prim.writeBoolean(isNull)
+        if (isNull)
+            endMarkIndex(label, null)
     }
 
-    override fun putUnit(label: String, value: Unit) {
-        markIfIndex(label, value)
+    override fun putUnit(label: String, value: Unit) = markIndex(label, value) {
     }
 
-    override fun putString(label: String, value: String) {
-        markIfIndex(label, value)
+    override fun putString(label: String, value: String) = markIndex(label, value) {
         if (utf8)
             prim.writeUTF(value)
         else {

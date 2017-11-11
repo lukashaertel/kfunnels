@@ -544,7 +544,9 @@ class FunnelableProcessor : BasicAnnotationProcessor() {
                 "kotlin.collections.List",
                 "kotlin.collections.MutableSet",
                 "kotlin.collections.HashSet",
-                "kotlin.collections.Set" -> return true
+                "kotlin.collections.Set",
+                "kotlin.Pair",
+                "kotlin.Triple" -> return true
             }
 
             val typeElement = processingEnv.elementUtils.getTypeElement(canonicalName)

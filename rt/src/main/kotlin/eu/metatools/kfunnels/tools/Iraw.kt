@@ -27,7 +27,13 @@ class Iraw<T, U>(val file: File,
                  val typeIndex: Type,
                  val module: Module = ServiceModule.std,
                  val utf8: Boolean = true) {
-    private val MAX_BUFFER_SIZE = 8192
+    companion object {
+        private val MAX_BUFFER_SIZE = 8192
+    }
+
+    private val dataStoreType = Type.list(typeItem)
+
+    private val indexStoreType = Type.list(Type.pair(typeIndex, Type.pair(Type.int, Type.int)))
 
     /**
      * Last time the index was retrieved.
@@ -37,7 +43,7 @@ class Iraw<T, U>(val file: File,
     /**
      * The index at last retrieval.
      */
-    private var lastIndex = mapOf<U, Int>()
+    private var lastIndex = mapOf<U, Pair<Int, Int>>()
 
     /**
      * Gets the last edit time of the files.
@@ -78,11 +84,11 @@ class Iraw<T, U>(val file: File,
 
         FileOutputStream(dataFile).use {
             val dataSink = IndexedRawSink(it, indexItem.name, utf8)
-            module.write(dataSink, Type.list(typeItem), list)
+            module.write(dataSink, dataStoreType, list)
 
             FileOutputStream(indexFile).use {
                 val indexSink = RawSink(it, utf8)
-                module.write(indexSink, Type.list(Type.pair(typeIndex, Type.int)), dataSink.index().toList())
+                module.write(indexSink, indexStoreType, dataSink.index().toList())
             }
         }
     }
@@ -92,7 +98,7 @@ class Iraw<T, U>(val file: File,
      */
     fun load(): List<T> {
         return FileInputStream(dataFile).use {
-            module.read<List<T>>(RawSource(it, utf8), Type.list(typeItem))
+            module.read<List<T>>(RawSource(it, utf8), dataStoreType)
         }
     }
 
@@ -116,7 +122,7 @@ class Iraw<T, U>(val file: File,
         }
 
         // Get position or return null
-        val position = lastIndex[u] ?: return null
+        val (position, _) = lastIndex[u] ?: return null
 
         // Get in real file by spooling
         return FileInputStream(dataFile).use {
@@ -167,11 +173,7 @@ class Iraw<T, U>(val file: File,
         val actual = us.filter { it in indices.keys }
 
         // Map to slices, i.e., connect to start of next item or end of file
-        val slices = actual.map {
-            val from = indices.getValue(it)
-            val to = indices.values.filter { it > from }.min() ?: size
-            from to to
-        }.sortedBy { it.first }
+        val slices = actual.map(indices::getValue).sortedBy { it.first }
 
         // If nothing to remove, terminate
         if (actual.isEmpty())
@@ -216,25 +218,16 @@ class Iraw<T, U>(val file: File,
         var offset = 0
 
         // New index created on the fly
-        val newIndex = hashMapOf<U, Int>()
+        val newIndex = hashMapOf<U, Pair<Int, Int>>()
 
-        // Linearize the entries by their positions
-        val linear = indices.entries.sortedBy { it.value }
-
-        // Paired up write (next is needed to adjust the offset to the new postition
-        var (lu, lp) = linear.first()
-        for ((u, p) in linear.drop(1)) {
-            if (lu in us)
-                offset += p - lp
+        // Pull back the entries by the sizes of the removed items
+        for ((u, p) in indices.entries.sortedBy { it.value.first }) {
+            val (s, t) = p
+            if (u in us)
+                offset += t - s
             else
-                newIndex[lu] = lp - offset
-            lu = u
-            lp = p
+                newIndex[u] = (s - offset) to (t - offset)
         }
-
-        // Clone of offset write for the last element.
-        if (lu !in us)
-            newIndex[lu] = lp - offset
 
         // Transfer indices
         lastIndex = newIndex
@@ -242,7 +235,7 @@ class Iraw<T, U>(val file: File,
         // Write indices
         FileOutputStream(indexFile).use {
             val indexSink = RawSink(it, utf8)
-            module.write(indexSink, Type.list(Type.pair(typeIndex, Type.int)), indices.toList())
+            module.write(indexSink, indexStoreType, indices.toList())
         }
 
         // Adjust edit time
@@ -261,7 +254,7 @@ class Iraw<T, U>(val file: File,
      */
     private fun readIndex() =
             FileInputStream(indexFile).use {
-                module.read<List<Pair<U, Int>>>(RawSource(it, utf8), Type.list(Type.pair(typeIndex, Type.int)))
+                module.read<List<Pair<U, Pair<Int, Int>>>>(RawSource(it, utf8), indexStoreType)
             }.associate {
                 it
             }

@@ -223,7 +223,7 @@ class IntentSink(val intent: Intent) : Sink, LabelStack {
     }
 
     override fun putNull(label: String, isNull: Boolean) {
-        intent.putExtra(joinSur("nulls", label), true)
+        intent.putExtra(joinSur("nulls", label), isNull)
     }
 
     override fun putUnit(label: String, value: Unit) {

@@ -407,7 +407,9 @@ data class Type(val kClass: KClass<*>, val nullable: Boolean, val args: List<Typ
                 kotlin.collections.List::class,
                 kotlin.collections.MutableSet::class,
                 kotlin.collections.HashSet::class,
-                kotlin.collections.Set::class -> true
+                kotlin.collections.Set::class,
+                kotlin.Pair::class,
+                kotlin.Triple::class -> true
             // Default detection
                 else -> !(kClass.isAbstract || kClass.isOpen || kClass.isSealed)
             }

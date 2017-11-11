@@ -98,7 +98,7 @@ fun main(args: Array<String>) {
     println(index)
 
     val item = ByteArrayInputStream(rawIndexed).use {
-        it.skip(index.getValue("b").toLong())
+        it.skip(index.getValue("b").first.toLong())
         ServiceModule.std.read<Pair<String, Int>>(RawSource(it))
     }
 
