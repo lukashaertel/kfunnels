@@ -6,6 +6,7 @@ import eu.metatools.kfunnels.utils.Option
 import eu.metatools.kfunnels.utils.Some
 import java.io.*
 import java.util.*
+import kotlin.reflect.KProperty1
 
 // TODO: Funnel needsEnd
 val endMark = 0x1337fabcaffe420bL
@@ -195,72 +196,51 @@ class RawSource(val source: InputStream,
  * A raw data sink with index maintenance.
  */
 class IndexedRawSink(val target: OutputStream,
+                     val indexType: Type,
                      val indexLabel: String,
                      val utf8: Boolean = true) : Sink {
     private val prim = DataOutputStream(target)
 
     private val index = hashMapOf<Any?, Pair<Int, Int>>()
 
-    private var depth = 0
+    private var starts = Stack<Int>()
+    private var ids = Stack<Option<Any?>>()
 
-    private var encounter: Option<Int> = None()
-
-    private var start = Int.MIN_VALUE
 
     fun index() = index.toMap()
 
 
     override fun begin(type: Type, value: Any?): Boolean {
-        depth++
+        if (type == indexType) {
+            starts.push(prim.size())
+            ids.push(None())
+        }
+
         return true
     }
 
     override fun end(type: Type, value: Any?) {
+        if (type == indexType) {
+            val start = starts.pop()
+            val id = ids.pop()
+            if (id.isSome)
+                index.put(id.value, start to prim.size())
+        }
+
         prim.writeLong(endMark)
-        depth--
     }
 
-    private fun beginMarkIndex(label: String) {
-        if (label != indexLabel)
-            return
 
-        when (encounter) {
-            is None<Int> -> encounter = Some(depth)
-            is Some<Int> -> if (depth != encounter.value) return
+    private fun handleId(label: String, value: Any?) {
+        if (label == indexLabel) {
+            ids.pop()
+            ids.push(Some(value))
         }
-
-        if (start == Int.MIN_VALUE)
-            start = prim.size()
-    }
-
-
-    private fun endMarkIndex(label: String, value: Any?) {
-        if (label != indexLabel)
-            return
-
-        when (encounter) {
-            is None<Int> -> encounter = Some(depth)
-            is Some<Int> -> if (depth != encounter.value) return
-        }
-
-        check(start != Int.MIN_VALUE)
-
-        val prev = index.get(value)
-        if (prev == null) {
-            index.put(value, start to prim.size())
-            start = Int.MIN_VALUE
-        } else
-            error("Index not unique, previously encountered at $prev.")
-    }
-
-    private inline fun markIndex(label: String, value: Any?, block: () -> Unit) {
-        beginMarkIndex(label)
-        block()
-        endMarkIndex(label, value)
     }
 
     override fun beginNested(label: String, type: Type, value: Any?): Boolean {
-        beginMarkIndex(label)
+        handleId(label, value)
+
         if (!type.isTerminal())
             prim.writeUTF(type.forInstance(value).toString())
 
@@ -268,52 +248,60 @@ class IndexedRawSink(val target: OutputStream,
     }
 
     override fun endNested(label: String, type: Type, value: Any?) {
-        endMarkIndex(label, value)
     }
 
-    override fun putBoolean(label: String, value: Boolean) = markIndex(label, value) {
+    override fun putBoolean(label: String, value: Boolean) {
+        handleId(label, value)
         prim.writeBoolean(value)
     }
 
-    override fun putByte(label: String, value: Byte) = markIndex(label, value) {
+    override fun putByte(label: String, value: Byte) {
+        handleId(label, value)
         prim.writeByte(value.toInt())
     }
 
-    override fun putShort(label: String, value: Short) = markIndex(label, value) {
+    override fun putShort(label: String, value: Short) {
+        handleId(label, value)
         prim.writeShort(value.toInt())
     }
 
-    override fun putInt(label: String, value: Int) = markIndex(label, value) {
+    override fun putInt(label: String, value: Int) {
+        handleId(label, value)
         prim.writeInt(value)
     }
 
-    override fun putLong(label: String, value: Long) = markIndex(label, value) {
+    override fun putLong(label: String, value: Long) {
+        handleId(label, value)
         prim.writeLong(value)
     }
 
-    override fun putFloat(label: String, value: Float) = markIndex(label, value) {
+    override fun putFloat(label: String, value: Float) {
+        handleId(label, value)
         prim.writeFloat(value)
     }
 
-    override fun putDouble(label: String, value: Double) = markIndex(label, value) {
+    override fun putDouble(label: String, value: Double) {
+        handleId(label, value)
         prim.writeDouble(value)
     }
 
-    override fun putChar(label: String, value: Char) = markIndex(label, value) {
+    override fun putChar(label: String, value: Char) {
+        handleId(label, value)
         prim.writeChar(value.toInt())
     }
 
     override fun putNull(label: String, isNull: Boolean) {
-        beginMarkIndex(label)
-        prim.writeBoolean(isNull)
         if (isNull)
-            endMarkIndex(label, null)
+            handleId(label, null)
+        prim.writeBoolean(isNull)
     }
 
-    override fun putUnit(label: String, value: Unit) = markIndex(label, value) {
+    override fun putUnit(label: String, value: Unit) {
+        handleId(label, value)
     }
 
-    override fun putString(label: String, value: String) = markIndex(label, value) {
+    override fun putString(label: String, value: String) {
+        handleId(label, value)
         if (utf8)
             prim.writeUTF(value)
         else {
@@ -322,3 +310,6 @@ class IndexedRawSink(val target: OutputStream,
         }
     }
 }
+
+inline fun <reified R> indexedRawSink(target: OutputStream, property: KProperty1<R, *>, utf8: Boolean = true) =
+        IndexedRawSink(target, Type.from<R>(), property.name, utf8)

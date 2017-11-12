@@ -1,12 +1,9 @@
 package eu.metatools.kfunnels.tests
 
-import eu.metatools.kfunnels.Funnelable
-import eu.metatools.kfunnels.ModuleProvider
+import eu.metatools.kfunnels.*
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.std
-import eu.metatools.kfunnels.read
 import eu.metatools.kfunnels.tools.*
-import eu.metatools.kfunnels.write
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -91,7 +88,7 @@ fun main(args: Array<String>) {
     println(indexed)
 
     val (rawIndexed, index) = ByteArrayOutputStream().use {
-        val sink = IndexedRawSink(it, "first")
+        val sink = indexedRawSink(it, Pair<String, Int>::second)
         TestsModule.std.write(sink, indexed)
         it.toByteArray() to sink.index()
     }
@@ -100,7 +97,7 @@ fun main(args: Array<String>) {
     println(index)
 
     val item = ByteArrayInputStream(rawIndexed).use {
-        it.skip(index.getValue("b").first.toLong())
+        it.skip(index.getValue(34).first.toLong())
         TestsModule.std.read<Pair<String, Int>>(RawSource(it))
     }
 

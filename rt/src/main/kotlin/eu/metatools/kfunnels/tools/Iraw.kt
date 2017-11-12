@@ -83,7 +83,7 @@ class Iraw<T, U>(val file: File,
         file.mkdirs()
 
         FileOutputStream(dataFile).use {
-            val dataSink = IndexedRawSink(it, indexItem.name, utf8)
+            val dataSink = IndexedRawSink(it, typeItem, indexItem.name, utf8)
             module.write(dataSink, dataStoreType, list)
 
             FileOutputStream(indexFile).use {
