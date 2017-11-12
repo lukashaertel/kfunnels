@@ -1,6 +1,7 @@
 package eu.metatools.kfunnels.tests
 
 import eu.metatools.kfunnels.Funnelable
+import eu.metatools.kfunnels.ModuleProvider
 import eu.metatools.kfunnels.base.ServiceModule
 import eu.metatools.kfunnels.base.std
 import eu.metatools.kfunnels.read
@@ -8,6 +9,7 @@ import eu.metatools.kfunnels.tools.*
 import eu.metatools.kfunnels.write
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.*
 
 fun main(args: Array<String>) {
     // Make a variant of the class with both Left and Right as an argument
@@ -21,11 +23,11 @@ fun main(args: Array<String>) {
     // Sequence both elements to a list
     val rawLeft = ByteArrayOutputStream().use {
         // Use the service registry, the .std suffix registers primtive types
-        ServiceModule.std.write(RawSink(it), itemLeft)
+        TestsModule.std.write(RawSink(it), itemLeft)
         it.toByteArray()
     }
     val rawRight = ByteArrayOutputStream().use {
-        ServiceModule.std.write(RawSink(it), itemRight)
+        TestsModule.std.write(RawSink(it), itemRight)
         it.toByteArray()
     }
 
@@ -34,8 +36,8 @@ fun main(args: Array<String>) {
     println(rawRight.toList())
 
     // Read both items back from the list
-    val cloneLeft = ServiceModule.std.read<Another>(RawSource(ByteArrayInputStream(rawLeft)))
-    val cloneRight = ServiceModule.std.read<Another>(RawSource(ByteArrayInputStream(rawRight)))
+    val cloneLeft = TestsModule.std.read<Another>(RawSource(ByteArrayInputStream(rawLeft)))
+    val cloneRight = TestsModule.std.read<Another>(RawSource(ByteArrayInputStream(rawRight)))
 
     // Print the clones as well
     println(cloneLeft)
@@ -49,7 +51,7 @@ fun main(args: Array<String>) {
 
     // Sequence into list
     val rawContainer = ByteArrayOutputStream().use {
-        ServiceModule.std.write(RawSink(it), container)
+        TestsModule.std.write(RawSink(it), container)
         it.toByteArray()
     }
 
@@ -57,7 +59,7 @@ fun main(args: Array<String>) {
     println(rawContainer.toList())
 
     // Read the clone form the list
-    val cloneContainer = ServiceModule.std.read<Container>(RawSource(ByteArrayInputStream(rawContainer)))
+    val cloneContainer = TestsModule.std.read<Container>(RawSource(ByteArrayInputStream(rawContainer)))
 
     // Print the clone
     println(cloneContainer)
@@ -71,7 +73,7 @@ fun main(args: Array<String>) {
 
     // Sequence into list
     val rawGeneric = ByteArrayOutputStream().use {
-        ServiceModule.std.write(RawSink(it), generic)
+        TestsModule.std.write(RawSink(it), generic)
         it.toByteArray()
     }
 
@@ -79,7 +81,7 @@ fun main(args: Array<String>) {
     println(rawGeneric.toList())
 
     // Read the clone form the list
-    val cloneGeneric = ServiceModule.std.read<Generic<Int>>(RawSource(ByteArrayInputStream(rawGeneric)))
+    val cloneGeneric = TestsModule.std.read<Generic<Int>>(RawSource(ByteArrayInputStream(rawGeneric)))
 
     // Print the clone
     println(cloneGeneric)
@@ -90,7 +92,7 @@ fun main(args: Array<String>) {
 
     val (rawIndexed, index) = ByteArrayOutputStream().use {
         val sink = IndexedRawSink(it, "first")
-        ServiceModule.std.write(sink, indexed)
+        TestsModule.std.write(sink, indexed)
         it.toByteArray() to sink.index()
     }
 
@@ -99,7 +101,7 @@ fun main(args: Array<String>) {
 
     val item = ByteArrayInputStream(rawIndexed).use {
         it.skip(index.getValue("b").first.toLong())
-        ServiceModule.std.read<Pair<String, Int>>(RawSource(it))
+        TestsModule.std.read<Pair<String, Int>>(RawSource(it))
     }
 
     println(item)

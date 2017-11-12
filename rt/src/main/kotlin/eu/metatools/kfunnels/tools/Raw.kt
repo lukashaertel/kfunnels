@@ -1,6 +1,9 @@
 package eu.metatools.kfunnels.tools
 
 import eu.metatools.kfunnels.*
+import eu.metatools.kfunnels.utils.None
+import eu.metatools.kfunnels.utils.Option
+import eu.metatools.kfunnels.utils.Some
 import java.io.*
 import java.util.*
 
@@ -200,6 +203,8 @@ class IndexedRawSink(val target: OutputStream,
 
     private var depth = 0
 
+    private var encounter: Option<Int> = None()
+
     private var start = Int.MIN_VALUE
 
     fun index() = index.toMap()
@@ -216,8 +221,13 @@ class IndexedRawSink(val target: OutputStream,
     }
 
     private fun beginMarkIndex(label: String) {
-        if (depth != -1 || label != indexLabel)
+        if (label != indexLabel)
             return
+
+        when (encounter) {
+            is None<Int> -> encounter = Some(depth)
+            is Some<Int> -> if (depth != encounter.value) return
+        }
 
         if (start == Int.MIN_VALUE)
             start = prim.size()
@@ -225,13 +235,18 @@ class IndexedRawSink(val target: OutputStream,
 
 
     private fun endMarkIndex(label: String, value: Any?) {
-        if (depth != -1 || label != indexLabel)
+        if (label != indexLabel)
             return
 
-        check(start == Int.MIN_VALUE)
+        when (encounter) {
+            is None<Int> -> encounter = Some(depth)
+            is Some<Int> -> if (depth != encounter.value) return
+        }
+
+        check(start != Int.MIN_VALUE)
 
         val prev = index.get(value)
-        if (value == null) {
+        if (prev == null) {
             index.put(value, start to prim.size())
             start = Int.MIN_VALUE
         } else
